@@ -39,6 +39,7 @@ from lxml import etree
 from datetime import datetime, timedelta
 import platform 
 from pkg_resources import get_distribution
+import pytest
 
 from PyTestLog2DB.CDataBase import CDataBase
 from PyTestLog2DB.version import VERSION, VERSION_DATE
@@ -162,7 +163,7 @@ CONFIG_SCHEMA = {
 
 DEFAULT_METADATA = {
    "component"    :  "unknown",
-   "variant"      :  "PyTestLog2DB",
+   "variant"      :  "PyTest",
    "version_sw"   :  "",
    "version_hw"   :  "",
    "version_test" :  "",
@@ -871,7 +872,7 @@ Process test case data and create new test case record.
       tbl_case_id = "testcase id for dryrun"
    Logger.log("Created test case result for test '%s' successfully: %s"%(_tbl_case_name,str(tbl_case_id)), indent=4)
 
-   return test.get("time")
+   return float(test.get("time"))
 
 def process_suite(db, suite, _tbl_test_result_id, dConfig=None):
    """
@@ -934,7 +935,7 @@ Process to the lowest suite level (test file):
             oTesttool = re.search(sFindstring, dConfig["testtool"])
             if oTesttool:
                _tbl_header_testtoolconfiguration_testtoolname    = truncate_db_str_field(oTesttool.group(1), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_testtoolname"])
-               _tbl_header_testtoolconfiguration_testtoolversion = truncate_db_str_field(oTesttool.group(2), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_testtoolversion"])
+               _tbl_header_testtoolconfiguration_testtoolversion = truncate_db_str_field(oTesttool.group(2), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_testtoolversionstring"])
                _tbl_header_testtoolconfiguration_pythonversion   = truncate_db_str_field(oTesttool.group(3), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_pythonversion"])
 
          _tbl_header_testtoolconfiguration_projectname     = dConfig["variant"]
