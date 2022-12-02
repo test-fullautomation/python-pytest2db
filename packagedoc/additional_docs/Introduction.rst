@@ -12,4 +12,18 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-TODO
+PyTestLog2DB_ is the tool that helps to import PyTest results file(s) 
+(as `JUnit XML`_ format) to TestResultWebApp_ Dashboard.
+
+PyTestLog2DB will:
+
+* parse all results in given pytest result file(s)
+* add metadata information which required by TestResultWebApp
+* import into database
+
+So that, you can have pretty report with many kinds of chart for visualizing
+pytest result and tracking purpose.
+
+.. _PyTestLog2DB: https://github.com/test-fullautomation/robotframework-pytestlog2db
+.. _TestResultWebApp: https://github.com/test-fullautomation/testresultwebapp
+.. _JUnit XML: https://llg.cubic.org/docs/junit/

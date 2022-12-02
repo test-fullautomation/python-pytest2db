@@ -1007,7 +1007,7 @@ Process to the lowest suite level (test file):
                               )
          else:
             _tbl_file_id = "file id for dryrun"
-         Logger.log("Created test file result for file '%s' successfully: %s"%(_tbl_file_name, str(_tbl_file_id)), indent=2)
+         Logger.log("Created test file result for classname '%s' successfully: %s"%(_tbl_file_name, str(_tbl_file_id)), indent=2)
          previous_file_name = _tbl_file_name
    
       # Process testcase
