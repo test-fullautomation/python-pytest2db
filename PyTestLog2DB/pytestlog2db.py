@@ -1154,7 +1154,7 @@ Flow to import PyTest results to database:
       else:
          _tbl_test_result_id = str(uuid.uuid4())
          if args.append:
-            Logger.log_warning("'--append' argument should be used in combination with '--UUID <UUID>` argument.")
+            Logger.log_error("'--append' argument should be used in combination with '--UUID <UUID>` argument.", fatal_error=True)
       
       # Process start/end time info
       _tbl_result_time_start = pytest_result.get("starttime")
@@ -1209,7 +1209,8 @@ Flow to import PyTest results to database:
 
    # 5. Disconnect from database
    db.disconnect()
-   Logger.log("All test results are written to database successfully.")
+   append_msg = " (append mode)" if args.append else ""
+   Logger.log(f"All test results are written to database successfully{append_msg}.")
 
 if __name__=="__main__":
    PyTestLog2DB()
