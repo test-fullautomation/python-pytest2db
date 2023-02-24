@@ -278,11 +278,11 @@ FATAL ERROR: Execution result with UUID 'c7991c07-4de2-4d65-8568-00c5556c82aa' i
   \textbf{UUID} if that \textbf{UUID} is not existing
 \end{itemize}
 
-If the argument \rlog{--append} is used without \rlog{--UUID <UUID>}, 
-only a warning message will be showed as below:
+If the argument \rlog{--append} is used without provided \rlog{--UUID <UUID>}, 
+the import job is terminated immediately with below error: 
 
 \begin{robotlog}
-WARN: '--append' argument should be used in combination with '--UUID <UUID>` argument.
+FATAL ERROR: '--append' argument should be used in combination with '--UUID <UUID>` argument
 \end{robotlog}
 
 \newpage
