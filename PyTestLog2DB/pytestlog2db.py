@@ -870,7 +870,9 @@ Process test case data and create new test case record.
                                              )
    else:
       tbl_case_id = "testcase id for dryrun"
-   Logger.log("Created test case result for test '%s' successfully: %s"%(_tbl_case_name,str(tbl_case_id)), indent=4)
+
+   component_msg = f" (component: {_tbl_case_component})" if _tbl_case_component != "unknown" else ""
+   Logger.log(f"Created test case result for test '{_tbl_case_name}' successfully: {str(tbl_case_id)}{component_msg}", indent=4)
 
    return float(test.get("time"))
 
