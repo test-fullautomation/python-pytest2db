@@ -152,7 +152,7 @@ This information is used as default value for `testtool` when importing.
    return f"PyTest {get_distribution('pytest').version} (Python {platform.python_version()})"
 
 CONFIG_SCHEMA = {
-   "component" : [str, dict],
+   "components" : [str, dict],
    "variant"   : str,
    "version_sw": str,
    "version_hw": str,
@@ -162,7 +162,7 @@ CONFIG_SCHEMA = {
 }
 
 DEFAULT_METADATA = {
-   "component"    :  "unknown",
+   "components"   :  "unknown",
    "variant"      :  "PyTest",
    "version_sw"   :  "",
    "version_hw"   :  "",
@@ -412,7 +412,7 @@ Default schema supports below information:
 .. code:: python
 
    CONFIG_SCHEMA = {
-      "component" : [str, dict],
+      "components": [str, dict],
       "variant"   : str,
       "version_sw": str,
       "version_hw": str,
@@ -702,14 +702,14 @@ mapping.
    """
    sComponent = "unknown"
 
-   if dConfig != None and "component" in dConfig:
+   if dConfig != None and "components" in dConfig:
       # component info as object in json file
-      if isinstance(dConfig["component"], dict):
-         for cmpt in dConfig["component"]:
+      if isinstance(dConfig["components"], dict):
+         for cmpt in dConfig["components"]:
             # component name maps with an array of classnames
-            if isinstance(dConfig["component"][cmpt], list):
+            if isinstance(dConfig["components"][cmpt], list):
                bFound = False
-               for clsName in dConfig["component"][cmpt]:
+               for clsName in dConfig["components"][cmpt]:
                   if clsName in sTestClassname:
                      sComponent = cmpt
                      bFound = True
@@ -717,13 +717,13 @@ mapping.
                if bFound:
                   break
             # component maps with single classname
-            elif isinstance(dConfig["component"][cmpt], str):
-               if dConfig["component"][cmpt] in sTestClassname:
+            elif isinstance(dConfig["components"][cmpt], str):
+               if dConfig["components"][cmpt] in sTestClassname:
                   sComponent = cmpt
                   break
       # component info as string in json file
-      elif isinstance(dConfig["component"], str) and dConfig["component"].strip() != "":
-         sComponent = dConfig["component"]
+      elif isinstance(dConfig["components"], str) and dConfig["components"].strip() != "":
+         sComponent = dConfig["components"]
 
    return sComponent
 
@@ -736,7 +736,7 @@ Parse information from configuration file:
    .. code:: python
 
       {
-         "component" : {
+         "components" : {
             "componentA" : "componentA/path/to/testcase",
             "componentB" : "componentB/path/to/testcase",
             "componentC" : [
