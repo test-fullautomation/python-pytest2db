@@ -333,6 +333,8 @@ Avalable arguments in command line:
    - `--dryrun` : if True, then verify all input arguments (includes DB connection) and show what would be done.
    - `--append` : if True, then allow to append new result(s) to existing execution result UUID which is provided by -UUID argument.
    - `--UUID` : UUID used to identify the import and version ID on TestResultWebApp.
+   - `--variant` : variant name to be set for this import.
+   - `--versions` : metadata: Versions (Software;Hardware;Test) to be set for this import.
    - `--config` : configuration json file for component mapping information.
 
 **Arguments:**
@@ -362,6 +364,8 @@ Avalable arguments in command line:
                               ' If set, allow to append new result(s) to existing execution result UUID in -UUID argument.')
    cmdlineparser.add_argument('--UUID', type=str, help='UUID used to identify the import and version ID on webapp.' + \
                               ' If not provided PyTestLog2DB will generate an UUID for the whole import.')
+   cmdlineparser.add_argument('--variant', type=str, help='variant name to be set for this import.')
+   cmdlineparser.add_argument('--versions', type=str, help='metadata: Versions (Software;Hardware;Test) to be set for this import (semicolon separated).')
    cmdlineparser.add_argument('--config', type=str, help='configuration json file for component mapping information.')
 
    return cmdlineparser.parse_args()
@@ -1049,6 +1053,8 @@ Flow to import PyTest results to database:
    * `dryrun` : if True, then just check the RQM authentication and show what would be done.
    * `append` : if True, then allow to append new result(s) to existing execution result UUID which is provided by -UUID argument.
    * `UUID` : UUID used to identify the import and version ID on TestResultWebApp.
+   * `variant` : variant name to be set for this import.
+   * `versions` : metadata: Versions (Software;Hardware;Test) to be set for this import.
    * `config` : configuration json file for component mapping information.
 
 **Returns:**
@@ -1074,7 +1080,7 @@ Flow to import PyTest results to database:
    else:
       if args.recursive:
          Logger.log("Searching result *.xml files recursively...")
-         for root, dirs, files in os.walk(args.resultxmlfile):
+         for root, _, files in os.walk(args.resultxmlfile):
             for file in files:
                if file.endswith(".xml"):
                   listEntries.append(os.path.join(root, file))
@@ -1096,6 +1102,15 @@ Flow to import PyTest results to database:
          pass
       else:
          Logger.log_error("the uuid provided is not valid: '%s'" % str(args.UUID), fatal_error=True)
+
+   # Validate provided versions info (software;hardware;test)
+   arVersions = []
+   if args.versions!=None and args.versions.strip() != "":
+      arVersions=args.versions.split(";")
+      arVersions=[x.strip() for x in arVersions]
+      if len(arVersions)>3:
+         Logger.log_error(f"The provided versions information is not valid: '{str(args.versions)}'", 
+                          fatal_error=True)
 
    # Validate provided configuration file (component, variant, version_sw)
    dConfig = {}
@@ -1131,14 +1146,27 @@ Flow to import PyTest results to database:
    #        '---Create new test result(s) 
    try:
       # Process project/variant
+      sVariant = dConfig["variant"]
+      if args.variant!=None and args.variant.strip() != "":
+         sVariant = args.variant.strip()
       # Project/Variant name is limited to 20 chars, otherwise an error is raised
-      _tbl_prj_project = _tbl_prj_variant = validate_db_str_field("variant", dConfig["variant"])
+      _tbl_prj_project = _tbl_prj_variant = validate_db_str_field("variant", sVariant)
 
       # Process versions info
+      sVersionSW = dConfig["version_sw"]
+      sVersionHW = dConfig["version_hw"]
+      sVersionTest = dConfig["version_test"]
+      if len(arVersions) > 0:
+         if len(arVersions)==1 or len(arVersions)==2 or len(arVersions)==3:
+            sVersionSW = arVersions[0] 
+         if len(arVersions)==2 or len(arVersions)==3:
+            sVersionHW = arVersions[1]
+         if len(arVersions)==3:
+            sVersionTest = arVersions[2]
       # Versions info is limited to 100 chars, otherwise an error is raised
-      _tbl_result_version_sw_target = validate_db_str_field("version_sw_target", dConfig["version_sw"])
-      _tbl_result_version_hardware  = truncate_db_str_field(dConfig["version_hw"], DB_STR_FIELD_MAXLENGTH["version_hardware"])
-      _tbl_result_version_sw_test   = truncate_db_str_field(dConfig["version_test"], DB_STR_FIELD_MAXLENGTH["version_sw_test"])
+      _tbl_result_version_sw_target = validate_db_str_field("version_sw_target", sVersionSW)
+      _tbl_result_version_hardware  = truncate_db_str_field(sVersionHW, DB_STR_FIELD_MAXLENGTH["version_hardware"])
+      _tbl_result_version_sw_test   = truncate_db_str_field(sVersionTest, DB_STR_FIELD_MAXLENGTH["version_sw_test"])
 
       # Set version as start time of the execution if not provided in metadata
       # Format: %Y%m%d_%H%M%S from %Y-%m-%d %H:%M:%S
