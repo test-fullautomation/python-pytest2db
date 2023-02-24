@@ -462,11 +462,13 @@ Default schema supports below information:
                bValid = False
 
          if not bValid:
-            Logger.log_error("Value of '%s' has wrong type '%s' in configuration json file."%(key,type(dSchema[key])), fatal_error=bExitOnFail)
+            Logger.log_error("Value of '%s' has wrong type '%s' in configuration json file."%(key,type(dConfig[key])), fatal_error=bExitOnFail)
+            break
 
       else:
          bValid = False
          Logger.log_error("Invalid key '%s' in configuration json file."%key, fatal_error=bExitOnFail)
+         break
    
    return bValid
 
