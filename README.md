@@ -82,7 +82,7 @@ The usage should be showed as below:
     -v                   Version of the PyTestLog2DB importer.
     --recursive          if set, then the path is searched recursively for output files to be imported.
     --dryrun             if set, then verify all input arguments (includes DB connection) and show what would be done.
-    --append             is used in combination with -UUID <UUID>. If set, allow to append new result(s) to existing execution result UUID in -UUID argument.
+    --append             is used in combination with --UUID <UUID>. If set, allow to append new result(s) to existing execution result UUID in -UUID argument.
     --UUID UUID          UUID used to identify the import and version ID on webapp. If not provided PyTestLog2DB will generate an UUID for the whole import.
     --variant VARIANT    variant name to be set for this import.
     --versions VERSIONS  metadata: Versions (Software;Hardware;Test) to be set for this import (semicolon separated).

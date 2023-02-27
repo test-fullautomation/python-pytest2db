@@ -294,7 +294,7 @@ result}\label{append-to-existing-execution-result}}
 \pkg\ also allow you to append new test result(s) (missing from
 previous import, on other test setup, ...) into the existing execution
 result (identified by the \textbf{UUID}) in TestResultWebApp's database. 
-The combination of optional arguments \rlog{--UUID <UUID>} and \rlog{--append}* 
+The combination of optional arguments \rlog{--UUID <UUID>} and \rlog{--append} 
 should be used in this case.
 
 The \rlog{--append} makes \pkg\ run in append mode and the \rlog{--UUID <UUID>} 
@@ -328,12 +328,21 @@ FATAL ERROR: Execution result with UUID 'c7991c07-4de2-4d65-8568-00c5556c82aa' i
   \textbf{UUID} if that \textbf{UUID} is not existing
 \end{itemize}
 
-If the argument \rlog{--append} is used without provided \rlog{--UUID <UUID>}, 
-the import job is terminated immediately with below error: 
-
+If the argument \rlog{--append} is used and:
+\begin{itemize}
+  \item given UUID in \rlog{--UUID <UUID>} argument is existing: the new result(s) will be appenden to that UUID
+  \item given UUID in \rlog{--UUID <UUID>} argument is not existing: tool will be terminated immediately with below error
+\begin{robotlog}
+FATAL ERROR: Execution result with UUID 'c7991c07-4de2-4d65-8568-00c5556c82aa' is not existing for appending.
+             Please use an existing UUID to append new result(s) to that UUID.
+             Or remove '--append' argument in your command to create new execution result with given UUID.
+\end{robotlog}
+  \item \rlog{--UUID <UUID>} is not provided: tool will be terminated immediately with below error
 \begin{robotlog}
 FATAL ERROR: '--append' argument should be used in combination with '--UUID <UUID>` argument
 \end{robotlog}
+\end{itemize} 
+
 
 \newpage
 \hypertarget{display-on-testresultwebapp}{%
