@@ -314,7 +314,7 @@ Write error message to console/file output.
 
       cls.log(prefix+str(msg), cls.color_error)
       if fatal_error:
-         cls.log("%s has been stopped!"%(sys.argv[0]), cls.color_error)
+         cls.log(f"{(sys.argv[0])} has been stopped!", cls.color_error)
          exit(1)
 
 def __process_commandline():
@@ -466,12 +466,12 @@ Default schema supports below information:
                bValid = False
 
          if not bValid:
-            Logger.log_error("Value of '%s' has wrong type '%s' in configuration json file."%(key,type(dConfig[key])), fatal_error=bExitOnFail)
+            Logger.log_error(f"Value of '{key}' has wrong type '{type(dConfig[key])}' in configuration json file.", fatal_error=bExitOnFail)
             break
 
       else:
          bValid = False
-         Logger.log_error("Invalid key '%s' in configuration json file."%key, fatal_error=bExitOnFail)
+         Logger.log_error(f"Invalid key '{key}' in configuration json file.", fatal_error=bExitOnFail)
          break
    
    return bValid
@@ -779,7 +779,7 @@ Parse information from configuration file:
          Logger.log_error(f"Cannot parse the json file '{config_file}'. Reason: {reason}", fatal_error=True)
 
    if not is_valid_config(dConfig, bExitOnFail=False):
-      Logger.log_error("Error in configuration file '%s'."%config_file, fatal_error=True)
+      Logger.log_error(f"Error in configuration file '{config_file}'.", fatal_error=True)
 
    return dConfig
 
@@ -1015,7 +1015,7 @@ Process to the lowest suite level (test file):
                               )
          else:
             _tbl_file_id = "file id for dryrun"
-         Logger.log("Created test file result for classname '%s' successfully: %s"%(_tbl_file_name, str(_tbl_file_id)), indent=2)
+         Logger.log(f"Created test file result for classname '{_tbl_file_name}' successfully: {str(_tbl_file_id)}", indent=2)
          previous_file_name = _tbl_file_name
    
       # Process testcase
@@ -1074,7 +1074,7 @@ Flow to import PyTest results to database:
       if os.path.isfile(args.resultxmlfile):
          sLogFileType="FILE"  
    else:
-      Logger.log_error("Resultxmlfile is not existing: '%s'" % str(args.resultxmlfile), fatal_error=True)
+      Logger.log_error(f"Resultxmlfile is not existing: '{args.resultxmlfile}'" , fatal_error=True)
 
    listEntries=[]
    if sLogFileType=="FILE":
@@ -1096,14 +1096,14 @@ Flow to import PyTest results to database:
 
       # Terminate tool with error when no logfile under provided resultxmlfile folder
       if len(listEntries) == 0:
-         Logger.log_error("No resultxmlfile under '%s' folder." % str(args.resultxmlfile), fatal_error=True)
+         Logger.log_error(f"No resultxmlfile under '{args.resultxmlfile}' folder.", fatal_error=True)
 
    # Validate provided UUID
    if args.UUID!=None:
       if is_valid_uuid(args.UUID):
          pass
       else:
-         Logger.log_error("the uuid provided is not valid: '%s'" % str(args.UUID), fatal_error=True)
+         Logger.log_error(f"the uuid provided is not valid: '{args.UUID}'", fatal_error=True)
 
    # Validate provided versions info (software;hardware;test)
    arVersions = []
@@ -1120,7 +1120,7 @@ Flow to import PyTest results to database:
       if os.path.isfile(args.config):
          dConfig = process_config_file(args.config)
       else:
-         Logger.log_error("The provided config file is not existing: '%s'" % str(args.config), fatal_error=True)
+         Logger.log_error(f"The provided config file is not existing: '{args.config}'", fatal_error=True)
 
    # Set default value for missing metadata bases on DEFAULT_METADATA
    for key in DEFAULT_METADATA:
@@ -1138,7 +1138,7 @@ Flow to import PyTest results to database:
                  args.password,
                  args.database)
    except Exception as reason:
-      Logger.log_error("Could not connect to database: '%s'" % str(reason), fatal_error=True)
+      Logger.log_error(f"Could not connect to database: '{reason}'", fatal_error=True)
 
    # 4. Import results into database
    #    Create new execution result in database
@@ -1226,9 +1226,9 @@ Flow to import PyTest results to database:
                                        _tbl_result_version_hardware,
                                        _tbl_result_jenkinsurl,
                                        _tbl_result_reporting_qualitygate)
-            Logger.log("Created test execution result for version '%s' successfully: %s"%(_tbl_result_version_sw_target,str(_tbl_test_result_id)))
+            Logger.log(f"Created test execution result for variant '{_tbl_prj_variant}' - version '{_tbl_result_version_sw_target}' successfully: {str(_tbl_test_result_id)}")
    except Exception as reason:
-      Logger.log_error("Could not create new execution result. Reason: %s"%reason, fatal_error=True)
+      Logger.log_error(f"Could not create new execution result. Reason: {reason}", fatal_error=True)
 
    for suite in pytest_result.iterchildren("testsuite"):
       process_suite(db, suite, _tbl_test_result_id, dConfig)
