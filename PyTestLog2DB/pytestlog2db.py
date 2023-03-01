@@ -370,6 +370,53 @@ Avalable arguments in command line:
 
    return cmdlineparser.parse_args()
 
+def collect_xml_result_files(path, search_recursive=False):
+   lFoundFiles = []
+   if os.path.exists(path):
+      if os.path.isfile(path):
+         validate_xml_result(path)
+         lFoundFiles.append(path)
+      else:
+         if search_recursive:
+            Logger.log("Searching *.xml result files recursively...")
+            for root, _, files in os.walk(path):
+               for file in files:
+                  if file.endswith(".xml"):
+                     xml_result_pathfile = os.path.join(root, file)
+                     Logger.log(xml_result_pathfile, indent=2)
+                     validate_xml_result(xml_result_pathfile)
+                     lFoundFiles.append(xml_result_pathfile)
+         else:
+            Logger.log("Searching *.xml result files...")
+            for file in os.listdir(path):
+               if file.endswith(".xml"):
+                  xml_result_pathfile = os.path.join(path, file)
+                  Logger.log(xml_result_pathfile, indent=2)
+                  validate_xml_result(xml_result_pathfile)
+                  lFoundFiles.append(xml_result_pathfile)
+
+         # Terminate tool with error when no logfile under provided folder
+         if len(lFoundFiles) == 0:
+            Logger.log_error(f"No *.xml result file under '{path}' folder.", fatal_error=True)
+   else:
+      Logger.log_error(f"Given resultxmlfile is not existing: '{path}'", fatal_error=True)
+
+   return lFoundFiles
+
+def validate_xml_result(xml_result, xsd_schema=os.path.join(os.path.dirname(__file__),'xsd/junit.xsd'), exit_on_failure=True):
+   xmlschema_doc = etree.parse(xsd_schema)
+   xmlschema = etree.XMLSchema(xmlschema_doc)
+
+   xml_doc = etree.parse(xml_result)
+
+   if exit_on_failure:
+      try:
+         xmlschema.assert_(xml_doc)
+      except AssertionError as reason:
+         Logger.log_error(f"xml result file '{xml_result}' is not a valid PyTest result.\nReason: {reason}", fatal_error=True)
+
+   return xmlschema.validate(xml_doc)
+
 def is_valid_uuid(uuid_to_test, version=4):
    """
 Verify the given UUID is valid or not.
@@ -633,7 +680,7 @@ Convention of branch information in suffix of software version:
    Branch name.
    """
    branch_name = "main"
-   version_number=re.findall("(\d+\.)(\d+)([S,F])\d+",sw_version.upper())
+   version_number=re.findall(r"(\d+\.)(\d+)([S,F])\d+",sw_version.upper())
    try:
       branch_name = "".join(version_number[0])
    except:
@@ -853,7 +900,12 @@ Process test case data and create new test case record.
       return
 
    _tbl_case_result_state   = "complete" 
+   _tbl_case_result_return  = 11
    _tbl_case_counter_resets = 0
+   try:
+      _tbl_case_lastlog = base64.b64encode(test.message.encode())
+   except:
+      _tbl_case_lastlog = None
    _tbl_test_result_id = test_result_id
    _tbl_file_id = file_id
    
@@ -876,7 +928,6 @@ Process test case data and create new test case record.
                                              )
    else:
       tbl_case_id = "testcase id for dryrun"
-
    component_msg = f" (component: {_tbl_case_component})" if _tbl_case_component != "unknown" else ""
    Logger.log(f"Created test case result for test '{_tbl_case_name}' successfully: {str(tbl_case_id)}{component_msg}", indent=4)
 
@@ -939,7 +990,7 @@ Process to the lowest suite level (test file):
          _tbl_header_testtoolconfiguration_testtoolversion   = ""
          _tbl_header_testtoolconfiguration_pythonversion     = ""
          if dConfig["testtool"]:
-            sFindstring = "([a-zA-Z\s\_]+[^\s])\s+([\d\.rcab]+)\s+\(Python\s+(.*)\)"
+            sFindstring = r"([a-zA-Z\s\_]+[^\s])\s+([\d\.rcab]+)\s+\(Python\s+(.*)\)"
             oTesttool = re.search(sFindstring, dConfig["testtool"])
             if oTesttool:
                _tbl_header_testtoolconfiguration_testtoolname    = truncate_db_str_field(oTesttool.group(1), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_testtoolname"])
@@ -1052,7 +1103,7 @@ Flow to import PyTest results to database:
    * `password` : password for database login.
    * `database` : database name.
    * `recursive` : if True, then the path is searched recursively for log files to be imported.
-   * `dryrun` : if True, then just check the RQM authentication and show what would be done.
+   * `dryrun` : if True, then verify all input arguments (includes DB connection) and show what would be done.
    * `append` : if True, then allow to append new result(s) to existing execution result UUID which is provided by --UUID argument.
    * `UUID` : UUID used to identify the import and version ID on TestResultWebApp.
    * `variant` : variant name to be set for this import.
@@ -1067,43 +1118,17 @@ Flow to import PyTest results to database:
    args = __process_commandline()
    Logger.config(dryrun=args.dryrun)
 
-   # Validate provide result *xml file/folder
-   sLogFileType="NONE"
-   if os.path.exists(args.resultxmlfile):
-      sLogFileType="PATH"
-      if os.path.isfile(args.resultxmlfile):
-         sLogFileType="FILE"  
-   else:
-      Logger.log_error(f"Resultxmlfile is not existing: '{args.resultxmlfile}'" , fatal_error=True)
+   # 2. Parse results from PyTest xml result file(s)
+   listEntries = collect_xml_result_files(args.resultxmlfile, args.recursive)
 
-   listEntries=[]
-   if sLogFileType=="FILE":
-      listEntries.append(args.resultxmlfile)
-   else:
-      if args.recursive:
-         Logger.log("Searching result *.xml files recursively...")
-         for root, _, files in os.walk(args.resultxmlfile):
-            for file in files:
-               if file.endswith(".xml"):
-                  listEntries.append(os.path.join(root, file))
-                  Logger.log(os.path.join(root, file), indent=2)
-      else:
-         Logger.log("Searching result *.xml files...")
-         for file in os.listdir(args.resultxmlfile):
-            if file.endswith(".xml"):
-               listEntries.append(os.path.join(args.resultxmlfile, file))
-               Logger.log(os.path.join(args.resultxmlfile, file), indent=2)
-
-      # Terminate tool with error when no logfile under provided resultxmlfile folder
-      if len(listEntries) == 0:
-         Logger.log_error(f"No resultxmlfile under '{args.resultxmlfile}' folder.", fatal_error=True)
+   pytest_result = parse_pytest_xml(*listEntries)
 
    # Validate provided UUID
    if args.UUID!=None:
       if is_valid_uuid(args.UUID):
          pass
       else:
-         Logger.log_error(f"the uuid provided is not valid: '{args.UUID}'", fatal_error=True)
+         Logger.log_error(f"The uuid provided is not valid: '{args.UUID}'", fatal_error=True)
 
    # Validate provided versions info (software;hardware;test)
    arVersions = []
@@ -1127,8 +1152,6 @@ Flow to import PyTest results to database:
       if key not in dConfig:
          dConfig[key] = DEFAULT_METADATA[key]
 
-   # 2. Parse results from PyTest xml result file(s)
-   pytest_result = parse_pytest_xml(*listEntries)
 
    # 3. Connect to database
    db=CDataBase()

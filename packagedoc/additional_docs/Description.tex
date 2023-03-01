@@ -62,8 +62,8 @@ optional arguments:
                      files to be imported.
 --dryrun             if set, then verify all input arguments (includes DB connection)
                      and show what would be done.
---append             is used in combination with -UUID <UUID>. If set, allow to append
-                     new result(s) to existing execution result UUID in -UUID argument.
+--append             is used in combination with --UUID <UUID>. If set, allow to append
+                     new result(s) to existing execution result UUID in --UUID argument.
 --UUID UUID          UUID used to identify the import and version ID on webapp.
                      If not provided PyTestLog2DB will generate an UUID for the whole import.
 --variant VARIANT    variant name to be set for this import.
@@ -288,8 +288,7 @@ With this feature, the importing execution result can be displayed
 properly without missing any required information.
 
 \hypertarget{append-to-existing-execution-result}{%
-\subsection{Append to existing execution
-result}\label{append-to-existing-execution-result}}
+\subsection{Append to existing execution result}\label{append-to-existing-execution-result}}
 
 \pkg\ also allow you to append new test result(s) (missing from
 previous import, on other test setup, ...) into the existing execution
@@ -308,7 +307,7 @@ result(s) in \textbf{output.xml} into that execution result.
 The command will be used as below:
 
 \begin{robotlog}
-python -m PyTestLog2DB output.xml localhost testuser testpw testdb --UUID c7991c07-4de2-4d65-8568-00c5556c82aa -append
+python -m PyTestLog2DB output.xml localhost testuser testpw testdb --UUID c7991c07-4de2-4d65-8568-00c5556c82aa --append
 \end{robotlog}
 
 If the argument \rlog{--UUID <UUID>} is used without \rlog{--append}:
@@ -330,7 +329,7 @@ FATAL ERROR: Execution result with UUID 'c7991c07-4de2-4d65-8568-00c5556c82aa' i
 
 If the argument \rlog{--append} is used and:
 \begin{itemize}
-  \item given UUID in \rlog{--UUID <UUID>} argument is existing: the new result(s) will be appenden to that UUID
+  \item given UUID in \rlog{--UUID <UUID>} argument is existing: the new result(s) will be appended to that UUID
   \item given UUID in \rlog{--UUID <UUID>} argument is not existing: tool will be terminated immediately with below error
 \begin{robotlog}
 FATAL ERROR: Execution result with UUID 'c7991c07-4de2-4d65-8568-00c5556c82aa' is not existing for appending.
