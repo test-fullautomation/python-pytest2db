@@ -152,7 +152,7 @@ This information is used as default value for `testtool` when importing.
    return f"PyTest {get_distribution('pytest').version} (Python {platform.python_version()})"
 
 CONFIG_SCHEMA = {
-   "component" : [str, dict],
+   "components" : [str, dict],
    "variant"   : str,
    "version_sw": str,
    "version_hw": str,
@@ -162,7 +162,7 @@ CONFIG_SCHEMA = {
 }
 
 DEFAULT_METADATA = {
-   "component"    :  "unknown",
+   "components"   :  "unknown",
    "variant"      :  "PyTest",
    "version_sw"   :  "",
    "version_hw"   :  "",
@@ -314,7 +314,7 @@ Write error message to console/file output.
 
       cls.log(prefix+str(msg), cls.color_error)
       if fatal_error:
-         cls.log("%s has been stopped!"%(sys.argv[0]), cls.color_error)
+         cls.log(f"{(sys.argv[0])} has been stopped!", cls.color_error)
          exit(1)
 
 def __process_commandline():
@@ -331,8 +331,10 @@ Avalable arguments in command line:
    - `database` : database name.
    - `--recursive` : if True, then the path is searched recursively for *.xml files to be imported.
    - `--dryrun` : if True, then verify all input arguments (includes DB connection) and show what would be done.
-   - `--append` : if True, then allow to append new result(s) to existing execution result UUID which is provided by -UUID argument.
+   - `--append` : if True, then allow to append new result(s) to existing execution result UUID which is provided by --UUID argument.
    - `--UUID` : UUID used to identify the import and version ID on TestResultWebApp.
+   - `--variant` : variant name to be set for this import.
+   - `--versions` : metadata: Versions (Software;Hardware;Test) to be set for this import.
    - `--config` : configuration json file for component mapping information.
 
 **Arguments:**
@@ -358,13 +360,62 @@ Avalable arguments in command line:
    cmdlineparser.add_argument('database', type=str, help='database schema for database login.')
    cmdlineparser.add_argument('--recursive', action="store_true", help='if set, then the path is searched recursively for output files to be imported.')
    cmdlineparser.add_argument('--dryrun', action="store_true", help='if set, then verify all input arguments (includes DB connection) and show what would be done.')
-   cmdlineparser.add_argument('--append', action="store_true", help='is used in combination with -UUID <UUID>.' +\
-                              ' If set, allow to append new result(s) to existing execution result UUID in -UUID argument.')
+   cmdlineparser.add_argument('--append', action="store_true", help='is used in combination with --UUID <UUID>.' +\
+                              ' If set, allow to append new result(s) to existing execution result UUID in --UUID argument.')
    cmdlineparser.add_argument('--UUID', type=str, help='UUID used to identify the import and version ID on webapp.' + \
                               ' If not provided PyTestLog2DB will generate an UUID for the whole import.')
+   cmdlineparser.add_argument('--variant', type=str, help='variant name to be set for this import.')
+   cmdlineparser.add_argument('--versions', type=str, help='metadata: Versions (Software;Hardware;Test) to be set for this import (semicolon separated).')
    cmdlineparser.add_argument('--config', type=str, help='configuration json file for component mapping information.')
 
    return cmdlineparser.parse_args()
+
+def collect_xml_result_files(path, search_recursive=False):
+   lFoundFiles = []
+   if os.path.exists(path):
+      if os.path.isfile(path):
+         validate_xml_result(path)
+         lFoundFiles.append(path)
+      else:
+         if search_recursive:
+            Logger.log("Searching *.xml result files recursively...")
+            for root, _, files in os.walk(path):
+               for file in files:
+                  if file.endswith(".xml"):
+                     xml_result_pathfile = os.path.join(root, file)
+                     Logger.log(xml_result_pathfile, indent=2)
+                     validate_xml_result(xml_result_pathfile)
+                     lFoundFiles.append(xml_result_pathfile)
+         else:
+            Logger.log("Searching *.xml result files...")
+            for file in os.listdir(path):
+               if file.endswith(".xml"):
+                  xml_result_pathfile = os.path.join(path, file)
+                  Logger.log(xml_result_pathfile, indent=2)
+                  validate_xml_result(xml_result_pathfile)
+                  lFoundFiles.append(xml_result_pathfile)
+
+         # Terminate tool with error when no logfile under provided folder
+         if len(lFoundFiles) == 0:
+            Logger.log_error(f"No *.xml result file under '{path}' folder.", fatal_error=True)
+   else:
+      Logger.log_error(f"Given resultxmlfile is not existing: '{path}'", fatal_error=True)
+
+   return lFoundFiles
+
+def validate_xml_result(xml_result, xsd_schema=os.path.join(os.path.dirname(__file__),'xsd/junit.xsd'), exit_on_failure=True):
+   xmlschema_doc = etree.parse(xsd_schema)
+   xmlschema = etree.XMLSchema(xmlschema_doc)
+
+   xml_doc = etree.parse(xml_result)
+
+   if exit_on_failure:
+      try:
+         xmlschema.assert_(xml_doc)
+      except AssertionError as reason:
+         Logger.log_error(f"xml result file '{xml_result}' is not a valid PyTest result.\nReason: {reason}", fatal_error=True)
+
+   return xmlschema.validate(xml_doc)
 
 def is_valid_uuid(uuid_to_test, version=4):
    """
@@ -412,7 +463,7 @@ Default schema supports below information:
 .. code:: python
 
    CONFIG_SCHEMA = {
-      "component" : [str, dict],
+      "components": [str, dict],
       "variant"   : str,
       "version_sw": str,
       "version_hw": str,
@@ -462,11 +513,13 @@ Default schema supports below information:
                bValid = False
 
          if not bValid:
-            Logger.log_error("Value of '%s' has wrong type '%s' in configuration json file."%(key,type(dSchema[key])), fatal_error=bExitOnFail)
+            Logger.log_error(f"Value of '{key}' has wrong type '{type(dConfig[key])}' in configuration json file.", fatal_error=bExitOnFail)
+            break
 
       else:
          bValid = False
-         Logger.log_error("Invalid key '%s' in configuration json file."%key, fatal_error=bExitOnFail)
+         Logger.log_error(f"Invalid key '{key}' in configuration json file.", fatal_error=bExitOnFail)
+         break
    
    return bValid
 
@@ -627,7 +680,7 @@ Convention of branch information in suffix of software version:
    Branch name.
    """
    branch_name = "main"
-   version_number=re.findall("(\d+\.)(\d+)([S,F])\d+",sw_version.upper())
+   version_number=re.findall(r"(\d+\.)(\d+)([S,F])\d+",sw_version.upper())
    try:
       branch_name = "".join(version_number[0])
    except:
@@ -702,14 +755,14 @@ mapping.
    """
    sComponent = "unknown"
 
-   if dConfig != None and "component" in dConfig:
+   if dConfig != None and "components" in dConfig:
       # component info as object in json file
-      if isinstance(dConfig["component"], dict):
-         for cmpt in dConfig["component"]:
+      if isinstance(dConfig["components"], dict):
+         for cmpt in dConfig["components"]:
             # component name maps with an array of classnames
-            if isinstance(dConfig["component"][cmpt], list):
+            if isinstance(dConfig["components"][cmpt], list):
                bFound = False
-               for clsName in dConfig["component"][cmpt]:
+               for clsName in dConfig["components"][cmpt]:
                   if clsName in sTestClassname:
                      sComponent = cmpt
                      bFound = True
@@ -717,13 +770,13 @@ mapping.
                if bFound:
                   break
             # component maps with single classname
-            elif isinstance(dConfig["component"][cmpt], str):
-               if dConfig["component"][cmpt] in sTestClassname:
+            elif isinstance(dConfig["components"][cmpt], str):
+               if dConfig["components"][cmpt] in sTestClassname:
                   sComponent = cmpt
                   break
       # component info as string in json file
-      elif isinstance(dConfig["component"], str) and dConfig["component"].strip() != "":
-         sComponent = dConfig["component"]
+      elif isinstance(dConfig["components"], str) and dConfig["components"].strip() != "":
+         sComponent = dConfig["components"]
 
    return sComponent
 
@@ -736,7 +789,7 @@ Parse information from configuration file:
    .. code:: python
 
       {
-         "component" : {
+         "components" : {
             "componentA" : "componentA/path/to/testcase",
             "componentB" : "componentB/path/to/testcase",
             "componentC" : [
@@ -773,7 +826,7 @@ Parse information from configuration file:
          Logger.log_error(f"Cannot parse the json file '{config_file}'. Reason: {reason}", fatal_error=True)
 
    if not is_valid_config(dConfig, bExitOnFail=False):
-      Logger.log_error("Error in configuration file '%s'."%config_file, fatal_error=True)
+      Logger.log_error(f"Error in configuration file '{config_file}'.", fatal_error=True)
 
    return dConfig
 
@@ -847,7 +900,12 @@ Process test case data and create new test case record.
       return
 
    _tbl_case_result_state   = "complete" 
+   _tbl_case_result_return  = 11
    _tbl_case_counter_resets = 0
+   try:
+      _tbl_case_lastlog = base64.b64encode(test.message.encode())
+   except:
+      _tbl_case_lastlog = None
    _tbl_test_result_id = test_result_id
    _tbl_file_id = file_id
    
@@ -870,7 +928,8 @@ Process test case data and create new test case record.
                                              )
    else:
       tbl_case_id = "testcase id for dryrun"
-   Logger.log("Created test case result for test '%s' successfully: %s"%(_tbl_case_name,str(tbl_case_id)), indent=4)
+   component_msg = f" (component: {_tbl_case_component})" if _tbl_case_component != "unknown" else ""
+   Logger.log(f"Created test case result for test '{_tbl_case_name}' successfully: {str(tbl_case_id)}{component_msg}", indent=4)
 
    return float(test.get("time"))
 
@@ -931,7 +990,7 @@ Process to the lowest suite level (test file):
          _tbl_header_testtoolconfiguration_testtoolversion   = ""
          _tbl_header_testtoolconfiguration_pythonversion     = ""
          if dConfig["testtool"]:
-            sFindstring = "([a-zA-Z\s\_]+[^\s])\s+([\d\.rcab]+)\s+\(Python\s+(.*)\)"
+            sFindstring = r"([a-zA-Z\s\_]+[^\s])\s+([\d\.rcab]+)\s+\(Python\s+(.*)\)"
             oTesttool = re.search(sFindstring, dConfig["testtool"])
             if oTesttool:
                _tbl_header_testtoolconfiguration_testtoolname    = truncate_db_str_field(oTesttool.group(1), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_testtoolname"])
@@ -1007,7 +1066,7 @@ Process to the lowest suite level (test file):
                               )
          else:
             _tbl_file_id = "file id for dryrun"
-         Logger.log("Created test file result for classname '%s' successfully: %s"%(_tbl_file_name, str(_tbl_file_id)), indent=2)
+         Logger.log(f"Created test file result for classname '{_tbl_file_name}' successfully: {str(_tbl_file_id)}", indent=2)
          previous_file_name = _tbl_file_name
    
       # Process testcase
@@ -1044,9 +1103,11 @@ Flow to import PyTest results to database:
    * `password` : password for database login.
    * `database` : database name.
    * `recursive` : if True, then the path is searched recursively for log files to be imported.
-   * `dryrun` : if True, then just check the RQM authentication and show what would be done.
-   * `append` : if True, then allow to append new result(s) to existing execution result UUID which is provided by -UUID argument.
+   * `dryrun` : if True, then verify all input arguments (includes DB connection) and show what would be done.
+   * `append` : if True, then allow to append new result(s) to existing execution result UUID which is provided by --UUID argument.
    * `UUID` : UUID used to identify the import and version ID on TestResultWebApp.
+   * `variant` : variant name to be set for this import.
+   * `versions` : metadata: Versions (Software;Hardware;Test) to be set for this import.
    * `config` : configuration json file for component mapping information.
 
 **Returns:**
@@ -1057,43 +1118,26 @@ Flow to import PyTest results to database:
    args = __process_commandline()
    Logger.config(dryrun=args.dryrun)
 
-   # Validate provide result *xml file/folder
-   sLogFileType="NONE"
-   if os.path.exists(args.resultxmlfile):
-      sLogFileType="PATH"
-      if os.path.isfile(args.resultxmlfile):
-         sLogFileType="FILE"  
-   else:
-      Logger.log_error("Resultxmlfile is not existing: '%s'" % str(args.resultxmlfile), fatal_error=True)
+   # 2. Parse results from PyTest xml result file(s)
+   listEntries = collect_xml_result_files(args.resultxmlfile, args.recursive)
 
-   listEntries=[]
-   if sLogFileType=="FILE":
-      listEntries.append(args.resultxmlfile)
-   else:
-      if args.recursive:
-         Logger.log("Searching result *.xml files recursively...")
-         for root, dirs, files in os.walk(args.resultxmlfile):
-            for file in files:
-               if file.endswith(".xml"):
-                  listEntries.append(os.path.join(root, file))
-                  Logger.log(os.path.join(root, file), indent=2)
-      else:
-         Logger.log("Searching result *.xml files...")
-         for file in os.listdir(args.resultxmlfile):
-            if file.endswith(".xml"):
-               listEntries.append(os.path.join(args.resultxmlfile, file))
-               Logger.log(os.path.join(args.resultxmlfile, file), indent=2)
-
-      # Terminate tool with error when no logfile under provided resultxmlfile folder
-      if len(listEntries) == 0:
-         Logger.log_error("No resultxmlfile under '%s' folder." % str(args.resultxmlfile), fatal_error=True)
+   pytest_result = parse_pytest_xml(*listEntries)
 
    # Validate provided UUID
    if args.UUID!=None:
       if is_valid_uuid(args.UUID):
          pass
       else:
-         Logger.log_error("the uuid provided is not valid: '%s'" % str(args.UUID), fatal_error=True)
+         Logger.log_error(f"The uuid provided is not valid: '{args.UUID}'", fatal_error=True)
+
+   # Validate provided versions info (software;hardware;test)
+   arVersions = []
+   if args.versions!=None and args.versions.strip() != "":
+      arVersions=args.versions.split(";")
+      arVersions=[x.strip() for x in arVersions]
+      if len(arVersions)>3:
+         Logger.log_error(f"The provided versions information is not valid: '{str(args.versions)}'", 
+                          fatal_error=True)
 
    # Validate provided configuration file (component, variant, version_sw)
    dConfig = {}
@@ -1101,15 +1145,13 @@ Flow to import PyTest results to database:
       if os.path.isfile(args.config):
          dConfig = process_config_file(args.config)
       else:
-         Logger.log_error("The provided config file is not existing: '%s'" % str(args.config), fatal_error=True)
+         Logger.log_error(f"The provided config file is not existing: '{args.config}'", fatal_error=True)
 
    # Set default value for missing metadata bases on DEFAULT_METADATA
    for key in DEFAULT_METADATA:
       if key not in dConfig:
          dConfig[key] = DEFAULT_METADATA[key]
 
-   # 2. Parse results from PyTest xml result file(s)
-   pytest_result = parse_pytest_xml(*listEntries)
 
    # 3. Connect to database
    db=CDataBase()
@@ -1119,7 +1161,7 @@ Flow to import PyTest results to database:
                  args.password,
                  args.database)
    except Exception as reason:
-      Logger.log_error("Could not connect to database: '%s'" % str(reason), fatal_error=True)
+      Logger.log_error(f"Could not connect to database: '{reason}'", fatal_error=True)
 
    # 4. Import results into database
    #    Create new execution result in database
@@ -1129,14 +1171,27 @@ Flow to import PyTest results to database:
    #        '---Create new test result(s) 
    try:
       # Process project/variant
+      sVariant = dConfig["variant"]
+      if args.variant!=None and args.variant.strip() != "":
+         sVariant = args.variant.strip()
       # Project/Variant name is limited to 20 chars, otherwise an error is raised
-      _tbl_prj_project = _tbl_prj_variant = validate_db_str_field("variant", dConfig["variant"])
+      _tbl_prj_project = _tbl_prj_variant = validate_db_str_field("variant", sVariant)
 
       # Process versions info
+      sVersionSW = dConfig["version_sw"]
+      sVersionHW = dConfig["version_hw"]
+      sVersionTest = dConfig["version_test"]
+      if len(arVersions) > 0:
+         if len(arVersions)==1 or len(arVersions)==2 or len(arVersions)==3:
+            sVersionSW = arVersions[0] 
+         if len(arVersions)==2 or len(arVersions)==3:
+            sVersionHW = arVersions[1]
+         if len(arVersions)==3:
+            sVersionTest = arVersions[2]
       # Versions info is limited to 100 chars, otherwise an error is raised
-      _tbl_result_version_sw_target = validate_db_str_field("version_sw_target", dConfig["version_sw"])
-      _tbl_result_version_hardware  = truncate_db_str_field(dConfig["version_hw"], DB_STR_FIELD_MAXLENGTH["version_hardware"])
-      _tbl_result_version_sw_test   = truncate_db_str_field(dConfig["version_test"], DB_STR_FIELD_MAXLENGTH["version_sw_test"])
+      _tbl_result_version_sw_target = validate_db_str_field("version_sw_target", sVersionSW)
+      _tbl_result_version_hardware  = truncate_db_str_field(sVersionHW, DB_STR_FIELD_MAXLENGTH["version_hardware"])
+      _tbl_result_version_sw_test   = truncate_db_str_field(sVersionTest, DB_STR_FIELD_MAXLENGTH["version_sw_test"])
 
       # Set version as start time of the execution if not provided in metadata
       # Format: %Y%m%d_%H%M%S from %Y-%m-%d %H:%M:%S
@@ -1152,7 +1207,7 @@ Flow to import PyTest results to database:
       else:
          _tbl_test_result_id = str(uuid.uuid4())
          if args.append:
-            Logger.log_warning("'--append' argument should be used in combination with '--UUID <UUID>` argument.")
+            Logger.log_error("'--append' argument should be used in combination with '--UUID <UUID>` argument.", fatal_error=True)
       
       # Process start/end time info
       _tbl_result_time_start = pytest_result.get("starttime")
@@ -1163,38 +1218,40 @@ Flow to import PyTest results to database:
       _tbl_result_jenkinsurl     = ""
       _tbl_result_reporting_qualitygate = ""
 
-      # Process new test result
-      if not Logger.dryrun:
-         db.sCreateNewTestResult(_tbl_prj_project,
-                                 _tbl_prj_variant,
-                                 _tbl_prj_branch,
-                                 _tbl_test_result_id,
-                                 _tbl_result_interpretation,
-                                 _tbl_result_time_start,
-                                 _tbl_result_time_end,
-                                 _tbl_result_version_sw_target,
-                                 _tbl_result_version_sw_test,
-                                 _tbl_result_version_hardware,
-                                 _tbl_result_jenkinsurl,
-                                 _tbl_result_reporting_qualitygate)
-      Logger.log("Created test execution result for version '%s' successfully: %s"%(_tbl_result_version_sw_target,str(_tbl_test_result_id)))
-   except Exception as reason:
-      # MySQL error code:
-      # Error Code   | SQLSTATE	|Error	      |Description                     
-      # -------------+-----------+--------------+-------------------------------
-      # 1062	      | 23000	   |ER_DUP_ENTRY	|Duplicate entry '%s' for key %d
-      if reason.args[0] == 1062:
-         # check -append argument
+      # Check the UUID is existing or not
+      error_indent = len(Logger.prefix_fatalerror)*' '
+      if db.bExistingResultID(_tbl_test_result_id):
          if args.append:
             Logger.log(f"Append to existing test execution result UUID '{_tbl_test_result_id}'.")
          else:
-            error_indent = len(Logger.prefix_fatalerror)*' '
             Logger.log_error(f"Execution result with UUID '{_tbl_test_result_id}' is already existing. \
                \n{error_indent}Please use other UUID (or remove '--UUID' argument from your command) for new execution result. \
                \n{error_indent}Or add '--append' argument in your command to append new result(s) to this existing UUID.", 
                fatal_error=True)
       else:
-         Logger.log_error("Could not create new execution result. Reason: %s"%reason, fatal_error=True)
+         if args.append:
+            Logger.log_error(f"Execution result with UUID '{_tbl_test_result_id}' is not existing for appending.\
+               \n{error_indent}Please use an existing UUID to append new result(s) to that UUID. \
+               \n{error_indent}Or remove '--append' argument in your command to create new execution result with given UUID.", 
+               fatal_error=True)
+         else:
+            # Process new test result
+            if not Logger.dryrun:
+               db.sCreateNewTestResult(_tbl_prj_project,
+                                       _tbl_prj_variant,
+                                       _tbl_prj_branch,
+                                       _tbl_test_result_id,
+                                       _tbl_result_interpretation,
+                                       _tbl_result_time_start,
+                                       _tbl_result_time_end,
+                                       _tbl_result_version_sw_target,
+                                       _tbl_result_version_sw_test,
+                                       _tbl_result_version_hardware,
+                                       _tbl_result_jenkinsurl,
+                                       _tbl_result_reporting_qualitygate)
+            Logger.log(f"Created test execution result for variant '{_tbl_prj_variant}' - version '{_tbl_result_version_sw_target}' successfully: {str(_tbl_test_result_id)}")
+   except Exception as reason:
+      Logger.log_error(f"Could not create new execution result. Reason: {reason}", fatal_error=True)
 
    for suite in pytest_result.iterchildren("testsuite"):
       process_suite(db, suite, _tbl_test_result_id, dConfig)
@@ -1207,7 +1264,8 @@ Flow to import PyTest results to database:
 
    # 5. Disconnect from database
    db.disconnect()
-   Logger.log("All test results are written to database successfully.")
+   append_msg = " (append mode)" if args.append else ""
+   Logger.log(f"All test results are written to database successfully{append_msg}.")
 
 if __name__=="__main__":
    PyTestLog2DB()

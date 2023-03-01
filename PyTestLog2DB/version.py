@@ -18,6 +18,6 @@
 #
 # Version and date of PyTestLog2DB
 #
-VERSION      = "0.1.2"
-VERSION_DATE = "01.12.2022"
+VERSION      = "0.1.6"
+VERSION_DATE = "01.03.2023"
 
