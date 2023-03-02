@@ -14,7 +14,7 @@
    "INTENDEDAUDIENCE" : "Intended Audience :: Developers",
    "TOPIC" : "Topic :: Software Development",
    "INSTALLREQUIRES" : ["pypandoc","colorama","mysqlclient","GenPackageDoc","PythonExtensionsCollection"],
-   "PACKAGEDATA" : ["*.pdf"],
+   "PACKAGEDATA" : ["*.pdf", "xsd/*.xsd"],
    "PACKAGEDOC" : "./packagedoc",
    "CONSOLESCRIPTS" : ["PyTestLog2DB = PyTestLog2DB.pytestlog2db:PyTestLog2DB"]
 }
