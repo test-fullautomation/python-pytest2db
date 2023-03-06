@@ -47,8 +47,8 @@ from PyTestLog2DB.version import VERSION, VERSION_DATE
 PYTEST_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 DB_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 DB_STR_FIELD_MAXLENGTH = {
-   "project" : 20,
-   "variant" : 20,
+   "project" : 100,
+   "variant" : 100,
    "branch"  : 20,
    "version_sw_target" : 100,
    "version_sw_test" : 100,
@@ -1232,7 +1232,7 @@ Flow to import PyTest results to database:
       sVariant = dConfig["variant"]
       if args.variant!=None and args.variant.strip() != "":
          sVariant = args.variant.strip()
-      # Project/Variant name is limited to 20 chars, otherwise an error is raised
+      # Project/Variant name is limited to 100 chars, otherwise an error is raised
       _tbl_prj_project = _tbl_prj_variant = validate_db_str_field("variant", sVariant)
 
       # Process versions info
