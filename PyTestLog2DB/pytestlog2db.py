@@ -46,49 +46,6 @@ from PyTestLog2DB.version import VERSION, VERSION_DATE
 
 PYTEST_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 DB_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-DB_STR_FIELD_MAXLENGTH = {
-   "project" : 20,
-   "variant" : 20,
-   "branch"  : 20,
-   "version_sw_target" : 100,
-   "version_sw_test" : 100,
-   "version_hardware" : 100,
-   "jenkinsurl" : 255,
-   "reporting_qualitygate" : 45,
-   "name" : 255,
-   "tester_account" : 100,
-   "tester_machine" : 45,
-   "origin" : 45,
-   "testtoolconfiguration_testtoolname" : 45,
-   "testtoolconfiguration_testtoolversionstring" : 255,
-   "testtoolconfiguration_projectname" : 255,
-   "testtoolconfiguration_logfileencoding" : 45,
-   "testtoolconfiguration_pythonversion" : 255,
-   "testtoolconfiguration_testfile" : 255,
-   "testtoolconfiguration_logfilepath" : 255,
-   "testtoolconfiguration_logfilemode" : 45,
-   "testtoolconfiguration_ctrlfilepath" : 255,
-   "testtoolconfiguration_configfile" : 255,
-   "testtoolconfiguration_confname" : 255,
-   "testfileheader_author" : 255,
-   "testfileheader_project" : 255,
-   "testfileheader_testfiledate" : 255,
-   "testfileheader_version_major" : 45,
-   "testfileheader_version_minor" : 45,
-   "testfileheader_version_patch" : 45,
-   "testfileheader_keyword" : 255,
-   "testfileheader_shortdescription" : 255,
-   "testexecution_useraccount" : 255,
-   "testexecution_computername" : 255,
-   "testrequirements_documentmanagement" : 255,
-   "testrequirements_testenvironment" : 255,
-   "testbenchconfig_name" : 255,
-   "preprocessor_filter" : 45,
-   "issue" : 50,
-   "tcid" : 50,
-   "fid" : 255,
-   "component" : 45
-}
 
 def __current_user():
    """
@@ -581,79 +538,6 @@ Default schema supports below information:
    
    return bValid
 
-def validate_db_str_field(field, value):
-   """
-Validate the string value for database field bases on its acceptable length.\
-The error will be thrown and tool terminates if the verification is failed.
-
-**Arguments:**
-
-*  ``field``
-
-   / *Condition*: required / *Type*: str /
-
-   Field name in the database.
-
-*  ``value``
-
-   / *Condition*: required / *Type*: str /
-
-   String value to be verified.
-
-**Returns:**
-
-   / *Type*: str /
-
-   String value if the verification is fine.
-   """
-   if field in DB_STR_FIELD_MAXLENGTH:
-      if len(value) > DB_STR_FIELD_MAXLENGTH[field]:
-         Logger.log_error(f"Provided value '{value}' for '{field}' is longer than acceptable {DB_STR_FIELD_MAXLENGTH[field]} chars.", fatal_error=True)
-      else:
-         return value
-   else:
-      Logger.log_error(f"Invalid field '{field}' to import into database", fatal_error=True)
-
-def truncate_db_str_field(sString, iMaxLength, sEndChars="..."):
-   """
-Truncate input string before importing to database.
-
-**Arguments:**
-
-*  ``sString``
-
-   / *Condition*: required / *Type*: str /
-
-   Input string for truncation.
-
-*  ``iMaxLength``
-
-   / *Condition*: required / *Type*: int /
-
-   Max length of string to be allowed. 
-
-*  ``sEndChars``
-
-   / *Condition*: optional / *Type*: str / *Default*: "..." /
-
-   End characters which are added to end of truncated string.
-
-**Returns:**
-
-*  ``content``
-
-   / *Type*: str /
-
-   String after truncation.
-   """
-   content = str(sString)
-   if isinstance(iMaxLength, int):
-      if len(content) > iMaxLength:
-         content = content[:iMaxLength-len(sEndChars)] + sEndChars
-   else:
-      raise Exception("parameter iMaxLength should be an integer")
-   
-   return content
 
 def parse_pytest_xml(*xmlfiles):
    """
@@ -942,13 +826,13 @@ Process test case data and create new test case record.
 
    Duration (in second) of test execution.
    """
-   _tbl_case_name  = truncate_db_str_field(test.get("name"), DB_STR_FIELD_MAXLENGTH["name"])
+   _tbl_case_name  = test.get("name")
    _tbl_case_issue = ""
    _tbl_case_tcid  = ""
    _tbl_case_fid   = ""
    _tbl_case_testnumber  = test_number
    _tbl_case_repeatcount = 1
-   _tbl_case_component   = truncate_db_str_field(component_name, DB_STR_FIELD_MAXLENGTH["component"])
+   _tbl_case_component   = component_name
    _tbl_case_time_start  = datetime.strftime(start_time, DB_DATETIME_FORMAT)
 
    try:
@@ -1051,20 +935,20 @@ Process to the lowest suite level (test file):
             sFindstring = r"([a-zA-Z\s\_]+[^\s])\s+([\d\.rcab]+)\s+\(Python\s+(.*)\)"
             oTesttool = re.search(sFindstring, dConfig["testtool"])
             if oTesttool:
-               _tbl_header_testtoolconfiguration_testtoolname    = truncate_db_str_field(oTesttool.group(1), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_testtoolname"])
-               _tbl_header_testtoolconfiguration_testtoolversion = truncate_db_str_field(oTesttool.group(2), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_testtoolversionstring"])
-               _tbl_header_testtoolconfiguration_pythonversion   = truncate_db_str_field(oTesttool.group(3), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_pythonversion"])
+               _tbl_header_testtoolconfiguration_testtoolname    = oTesttool.group(1)
+               _tbl_header_testtoolconfiguration_testtoolversion = oTesttool.group(2)
+               _tbl_header_testtoolconfiguration_pythonversion   = oTesttool.group(3)
 
          _tbl_header_testtoolconfiguration_projectname     = dConfig["variant"]
          _tbl_header_testtoolconfiguration_logfileencoding = "UTF-8"
-         _tbl_header_testtoolconfiguration_testfile        = truncate_db_str_field(_tbl_file_name, DB_STR_FIELD_MAXLENGTH["name"])
+         _tbl_header_testtoolconfiguration_testfile        = _tbl_file_name
          _tbl_header_testtoolconfiguration_logfilepath     = ""
          _tbl_header_testtoolconfiguration_logfilemode     = ""
          _tbl_header_testtoolconfiguration_ctrlfilepath    = ""
          _tbl_header_testtoolconfiguration_configfile      = ""
          _tbl_header_testtoolconfiguration_confname        = ""
 
-         _tbl_header_testfileheader_author           = truncate_db_str_field(dConfig["tester"], DB_STR_FIELD_MAXLENGTH["tester_account"])
+         _tbl_header_testfileheader_author           = dConfig["tester"]
          _tbl_header_testfileheader_project          = dConfig["variant"]
          _tbl_header_testfileheader_testfiledate     = ""
          _tbl_header_testfileheader_version_major    = ""
@@ -1072,8 +956,8 @@ Process to the lowest suite level (test file):
          _tbl_header_testfileheader_version_patch    = ""
          _tbl_header_testfileheader_keyword          = ""
          _tbl_header_testfileheader_shortdescription = ""
-         _tbl_header_testexecution_useraccount       = truncate_db_str_field(dConfig["tester"], DB_STR_FIELD_MAXLENGTH["tester_account"])
-         _tbl_header_testexecution_computername      = truncate_db_str_field(_tbl_file_tester_machine, DB_STR_FIELD_MAXLENGTH["tester_machine"])
+         _tbl_header_testexecution_useraccount       = dConfig["tester"]
+         _tbl_header_testexecution_computername      = _tbl_file_tester_machine
 
          _tbl_header_testrequirements_documentmanagement = ""
          _tbl_header_testrequirements_testenvironment    = ""
@@ -1236,8 +1120,7 @@ Flow to import PyTest results to database:
       if args.variant!=None and args.variant.strip() != "":
          bUseDefaultPrjVariant = False
          sVariant = args.variant.strip()
-      # Project/Variant name is limited to 20 chars, otherwise an error is raised
-      _tbl_prj_project = _tbl_prj_variant = validate_db_str_field("variant", sVariant)
+      _tbl_prj_project = _tbl_prj_variant = sVariant
 
       # Process versions info
       sVersionSW = dConfig["version_sw"]
@@ -1251,10 +1134,9 @@ Flow to import PyTest results to database:
             sVersionHW = arVersions[1]
          if len(arVersions)==3:
             sVersionTest = arVersions[2]
-      # Versions info is limited to 100 chars, otherwise an error is raised
-      _tbl_result_version_sw_target = validate_db_str_field("version_sw_target", sVersionSW)
-      _tbl_result_version_hardware  = truncate_db_str_field(sVersionHW, DB_STR_FIELD_MAXLENGTH["version_hardware"])
-      _tbl_result_version_sw_test   = truncate_db_str_field(sVersionTest, DB_STR_FIELD_MAXLENGTH["version_sw_test"])
+      _tbl_result_version_sw_target = sVersionSW
+      _tbl_result_version_hardware  = sVersionHW
+      _tbl_result_version_sw_test   = sVersionTest
 
       # Set version as start time of the execution if not provided in metadata
       # Format: %Y%m%d_%H%M%S from %Y-%m-%d %H:%M:%S

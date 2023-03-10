@@ -395,17 +395,17 @@ linked to all other data by means of ``test_result_id``.
       res = self.__arExec(sql,sqlval,True)[0][0]
       if res == 0:
          sql,sqlval = """insert into """ + self.db + """.tbl_prj 
-         (project, variant, branch) values (%s, %s, %s)""" , (_tbl_prj_project,
-                                                              _tbl_prj_variant,
+         ( variant,project, branch) values (%s, %s, %s)""" , (_tbl_prj_variant,
+                                                              _tbl_prj_project,
                                                               _tbl_prj_branch)
          self.__arExec(sql,sqlval) 
          
       sql,sqlval = """insert into """ + self.db + """.tbl_result (test_result_id, 
-         project,variant,branch, time_start,time_end, version_sw_target, 
+         variant,project,branch, time_start,time_end, version_sw_target, 
          version_sw_test,version_hardware,jenkinsurl,reporting_qualitygate,result_state) 
          values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""" , (_tbl_test_result_id,
-                                                            _tbl_prj_project,
                                                             _tbl_prj_variant,
+                                                            _tbl_prj_project,
                                                             _tbl_prj_branch,
                                                             _tbl_result_time_start,
                                                             _tbl_result_time_end,
