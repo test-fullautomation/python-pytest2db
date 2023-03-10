@@ -1228,9 +1228,13 @@ Flow to import PyTest results to database:
    #        |
    #        '---Create new test result(s) 
    try:
+      bUseDefaultPrjVariant = True
+      bUseDefaultVersionSW  = True
+      
       # Process project/variant
       sVariant = dConfig["variant"]
       if args.variant!=None and args.variant.strip() != "":
+         bUseDefaultPrjVariant = False
          sVariant = args.variant.strip()
       # Project/Variant name is limited to 20 chars, otherwise an error is raised
       _tbl_prj_project = _tbl_prj_variant = validate_db_str_field("variant", sVariant)
@@ -1240,6 +1244,7 @@ Flow to import PyTest results to database:
       sVersionHW = dConfig["version_hw"]
       sVersionTest = dConfig["version_test"]
       if len(arVersions) > 0:
+         bUseDefaultVersionSW = False
          if len(arVersions)==1 or len(arVersions)==2 or len(arVersions)==3:
             sVersionSW = arVersions[0] 
          if len(arVersions)==2 or len(arVersions)==3:
@@ -1278,9 +1283,18 @@ Flow to import PyTest results to database:
 
       # Check the UUID is existing or not
       error_indent = len(Logger.prefix_fatalerror)*' '
-      if db.bExistingResultID(_tbl_test_result_id):
+      _db_result_info = db.arGetProjectVersionSWByID(_tbl_test_result_id)
+      if _db_result_info:
          if args.append:
-            Logger.log(f"Append to existing test execution result UUID '{_tbl_test_result_id}'.")
+            # Check given variant/project and version_sw (not default values) with existing values in db
+            _db_prj_variant = _db_result_info[0]
+            _db_version_sw  = _db_result_info[1]
+            if not bUseDefaultPrjVariant and _tbl_prj_variant != _db_prj_variant:
+               Logger.log_error(f"Given project/variant '{_tbl_prj_variant}' is different with existing value '{_db_prj_variant}' in database.", fatal_error=True)
+            elif not bUseDefaultVersionSW and _tbl_result_version_sw_target != _db_version_sw: 
+               Logger.log_error(f"Given version software '{_tbl_result_version_sw_target}' is different with existing value '{_db_version_sw}' in database.", fatal_error=True)
+            else:
+               Logger.log(f"Append to existing test execution result for variant '{_db_prj_variant}' - version '{_db_version_sw}' - UUID '{_tbl_test_result_id}'.")
          else:
             Logger.log_error(f"Execution result with UUID '{_tbl_test_result_id}' is already existing. \
                \n{error_indent}Please use other UUID (or remove '--UUID' argument from your command) for new execution result. \
