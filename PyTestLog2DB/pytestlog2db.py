@@ -46,49 +46,6 @@ from PyTestLog2DB.version import VERSION, VERSION_DATE
 
 PYTEST_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 DB_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-DB_STR_FIELD_MAXLENGTH = {
-   "project" : 20,
-   "variant" : 20,
-   "branch"  : 20,
-   "version_sw_target" : 100,
-   "version_sw_test" : 100,
-   "version_hardware" : 100,
-   "jenkinsurl" : 255,
-   "reporting_qualitygate" : 45,
-   "name" : 255,
-   "tester_account" : 100,
-   "tester_machine" : 45,
-   "origin" : 45,
-   "testtoolconfiguration_testtoolname" : 45,
-   "testtoolconfiguration_testtoolversionstring" : 255,
-   "testtoolconfiguration_projectname" : 255,
-   "testtoolconfiguration_logfileencoding" : 45,
-   "testtoolconfiguration_pythonversion" : 255,
-   "testtoolconfiguration_testfile" : 255,
-   "testtoolconfiguration_logfilepath" : 255,
-   "testtoolconfiguration_logfilemode" : 45,
-   "testtoolconfiguration_ctrlfilepath" : 255,
-   "testtoolconfiguration_configfile" : 255,
-   "testtoolconfiguration_confname" : 255,
-   "testfileheader_author" : 255,
-   "testfileheader_project" : 255,
-   "testfileheader_testfiledate" : 255,
-   "testfileheader_version_major" : 45,
-   "testfileheader_version_minor" : 45,
-   "testfileheader_version_patch" : 45,
-   "testfileheader_keyword" : 255,
-   "testfileheader_shortdescription" : 255,
-   "testexecution_useraccount" : 255,
-   "testexecution_computername" : 255,
-   "testrequirements_documentmanagement" : 255,
-   "testrequirements_testenvironment" : 255,
-   "testbenchconfig_name" : 255,
-   "preprocessor_filter" : 45,
-   "issue" : 50,
-   "tcid" : 50,
-   "fid" : 255,
-   "component" : 45
-}
 
 def __current_user():
    """
@@ -581,79 +538,6 @@ Default schema supports below information:
    
    return bValid
 
-def validate_db_str_field(field, value):
-   """
-Validate the string value for database field bases on its acceptable length.\
-The error will be thrown and tool terminates if the verification is failed.
-
-**Arguments:**
-
-*  ``field``
-
-   / *Condition*: required / *Type*: str /
-
-   Field name in the database.
-
-*  ``value``
-
-   / *Condition*: required / *Type*: str /
-
-   String value to be verified.
-
-**Returns:**
-
-   / *Type*: str /
-
-   String value if the verification is fine.
-   """
-   if field in DB_STR_FIELD_MAXLENGTH:
-      if len(value) > DB_STR_FIELD_MAXLENGTH[field]:
-         Logger.log_error(f"Provided value '{value}' for '{field}' is longer than acceptable {DB_STR_FIELD_MAXLENGTH[field]} chars.", fatal_error=True)
-      else:
-         return value
-   else:
-      Logger.log_error(f"Invalid field '{field}' to import into database", fatal_error=True)
-
-def truncate_db_str_field(sString, iMaxLength, sEndChars="..."):
-   """
-Truncate input string before importing to database.
-
-**Arguments:**
-
-*  ``sString``
-
-   / *Condition*: required / *Type*: str /
-
-   Input string for truncation.
-
-*  ``iMaxLength``
-
-   / *Condition*: required / *Type*: int /
-
-   Max length of string to be allowed. 
-
-*  ``sEndChars``
-
-   / *Condition*: optional / *Type*: str / *Default*: "..." /
-
-   End characters which are added to end of truncated string.
-
-**Returns:**
-
-*  ``content``
-
-   / *Type*: str /
-
-   String after truncation.
-   """
-   content = str(sString)
-   if isinstance(iMaxLength, int):
-      if len(content) > iMaxLength:
-         content = content[:iMaxLength-len(sEndChars)] + sEndChars
-   else:
-      raise Exception("parameter iMaxLength should be an integer")
-   
-   return content
 
 def parse_pytest_xml(*xmlfiles):
    """
@@ -942,13 +826,13 @@ Process test case data and create new test case record.
 
    Duration (in second) of test execution.
    """
-   _tbl_case_name  = truncate_db_str_field(test.get("name"), DB_STR_FIELD_MAXLENGTH["name"])
+   _tbl_case_name  = test.get("name")
    _tbl_case_issue = ""
    _tbl_case_tcid  = ""
    _tbl_case_fid   = ""
    _tbl_case_testnumber  = test_number
    _tbl_case_repeatcount = 1
-   _tbl_case_component   = truncate_db_str_field(component_name, DB_STR_FIELD_MAXLENGTH["component"])
+   _tbl_case_component   = component_name
    _tbl_case_time_start  = datetime.strftime(start_time, DB_DATETIME_FORMAT)
 
    try:
@@ -1051,20 +935,20 @@ Process to the lowest suite level (test file):
             sFindstring = r"([a-zA-Z\s\_]+[^\s])\s+([\d\.rcab]+)\s+\(Python\s+(.*)\)"
             oTesttool = re.search(sFindstring, dConfig["testtool"])
             if oTesttool:
-               _tbl_header_testtoolconfiguration_testtoolname    = truncate_db_str_field(oTesttool.group(1), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_testtoolname"])
-               _tbl_header_testtoolconfiguration_testtoolversion = truncate_db_str_field(oTesttool.group(2), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_testtoolversionstring"])
-               _tbl_header_testtoolconfiguration_pythonversion   = truncate_db_str_field(oTesttool.group(3), DB_STR_FIELD_MAXLENGTH["testtoolconfiguration_pythonversion"])
+               _tbl_header_testtoolconfiguration_testtoolname    = oTesttool.group(1)
+               _tbl_header_testtoolconfiguration_testtoolversion = oTesttool.group(2)
+               _tbl_header_testtoolconfiguration_pythonversion   = oTesttool.group(3)
 
          _tbl_header_testtoolconfiguration_projectname     = dConfig["variant"]
          _tbl_header_testtoolconfiguration_logfileencoding = "UTF-8"
-         _tbl_header_testtoolconfiguration_testfile        = truncate_db_str_field(_tbl_file_name, DB_STR_FIELD_MAXLENGTH["name"])
+         _tbl_header_testtoolconfiguration_testfile        = _tbl_file_name
          _tbl_header_testtoolconfiguration_logfilepath     = ""
          _tbl_header_testtoolconfiguration_logfilemode     = ""
          _tbl_header_testtoolconfiguration_ctrlfilepath    = ""
          _tbl_header_testtoolconfiguration_configfile      = ""
          _tbl_header_testtoolconfiguration_confname        = ""
 
-         _tbl_header_testfileheader_author           = truncate_db_str_field(dConfig["tester"], DB_STR_FIELD_MAXLENGTH["tester_account"])
+         _tbl_header_testfileheader_author           = dConfig["tester"]
          _tbl_header_testfileheader_project          = dConfig["variant"]
          _tbl_header_testfileheader_testfiledate     = ""
          _tbl_header_testfileheader_version_major    = ""
@@ -1072,8 +956,8 @@ Process to the lowest suite level (test file):
          _tbl_header_testfileheader_version_patch    = ""
          _tbl_header_testfileheader_keyword          = ""
          _tbl_header_testfileheader_shortdescription = ""
-         _tbl_header_testexecution_useraccount       = truncate_db_str_field(dConfig["tester"], DB_STR_FIELD_MAXLENGTH["tester_account"])
-         _tbl_header_testexecution_computername      = truncate_db_str_field(_tbl_file_tester_machine, DB_STR_FIELD_MAXLENGTH["tester_machine"])
+         _tbl_header_testexecution_useraccount       = dConfig["tester"]
+         _tbl_header_testexecution_computername      = _tbl_file_tester_machine
 
          _tbl_header_testrequirements_documentmanagement = ""
          _tbl_header_testrequirements_testenvironment    = ""
@@ -1228,33 +1112,49 @@ Flow to import PyTest results to database:
    #        |
    #        '---Create new test result(s) 
    try:
+      bUseDefaultPrjVariant = True
+      bUseDefaultVersionSW  = True
+      sMsgVarirantSetBy = sMsgVersionSWSetBy = "default value"
+      
       # Process project/variant
       sVariant = dConfig["variant"]
       if args.variant!=None and args.variant.strip() != "":
+         bUseDefaultPrjVariant = False
+         sMsgVarirantSetBy = "from --variant commandline argument"
          sVariant = args.variant.strip()
-      # Project/Variant name is limited to 20 chars, otherwise an error is raised
-      _tbl_prj_project = _tbl_prj_variant = validate_db_str_field("variant", sVariant)
+      elif sVariant != DEFAULT_METADATA["variant"]:
+         bUseDefaultPrjVariant = False
+         sMsgVarirantSetBy = f"from configuration '{args.config}' file provided by --config"  
+      _tbl_prj_project = _tbl_prj_variant = sVariant
 
       # Process versions info
       sVersionSW = dConfig["version_sw"]
       sVersionHW = dConfig["version_hw"]
       sVersionTest = dConfig["version_test"]
+      if sVersionSW != DEFAULT_METADATA["version_sw"]:
+         bUseDefaultVersionSW = False
+         sMsgVersionSWSetBy = f"from configuration '{args.config}' file provided by --config"
       if len(arVersions) > 0:
+         bUseDefaultVersionSW = False
+         sMsgVersionSWSetBy = "from --versions commandline argument"
          if len(arVersions)==1 or len(arVersions)==2 or len(arVersions)==3:
             sVersionSW = arVersions[0] 
          if len(arVersions)==2 or len(arVersions)==3:
             sVersionHW = arVersions[1]
          if len(arVersions)==3:
             sVersionTest = arVersions[2]
-      # Versions info is limited to 100 chars, otherwise an error is raised
-      _tbl_result_version_sw_target = validate_db_str_field("version_sw_target", sVersionSW)
-      _tbl_result_version_hardware  = truncate_db_str_field(sVersionHW, DB_STR_FIELD_MAXLENGTH["version_hardware"])
-      _tbl_result_version_sw_test   = truncate_db_str_field(sVersionTest, DB_STR_FIELD_MAXLENGTH["version_sw_test"])
+      _tbl_result_version_sw_target = sVersionSW
+      _tbl_result_version_hardware  = sVersionHW
+      _tbl_result_version_sw_test   = sVersionTest
 
       # Set version as start time of the execution if not provided in metadata
       # Format: %Y%m%d_%H%M%S from %Y-%m-%d %H:%M:%S
       if _tbl_result_version_sw_target=="":
          _tbl_result_version_sw_target = datetime.strftime(datetime.strptime(pytest_result.get("starttime"), DB_DATETIME_FORMAT), "%Y%m%d_%H%M%S")
+
+      if not args.append:
+         Logger.log(f"Set project/variant to '{sVariant}' ({sMsgVarirantSetBy})")
+         Logger.log(f"Set version_sw to '{_tbl_result_version_sw_target}' ({sMsgVersionSWSetBy})")
 
       # Process branch info from software version
       _tbl_prj_branch = get_branch_from_swversion(_tbl_result_version_sw_target)
@@ -1278,9 +1178,18 @@ Flow to import PyTest results to database:
 
       # Check the UUID is existing or not
       error_indent = len(Logger.prefix_fatalerror)*' '
-      if db.bExistingResultID(_tbl_test_result_id):
+      _db_result_info = db.arGetProjectVersionSWByID(_tbl_test_result_id)
+      if _db_result_info:
          if args.append:
-            Logger.log(f"Append to existing test execution result UUID '{_tbl_test_result_id}'.")
+            # Check given variant/project and version_sw (not default values) with existing values in db
+            _db_prj_variant = _db_result_info[0]
+            _db_version_sw  = _db_result_info[1]
+            if not bUseDefaultPrjVariant and _tbl_prj_variant != _db_prj_variant:
+               Logger.log_error(f"Given project/variant '{_tbl_prj_variant}' is different with existing value '{_db_prj_variant}' in database.", fatal_error=True)
+            elif not bUseDefaultVersionSW and _tbl_result_version_sw_target != _db_version_sw: 
+               Logger.log_error(f"Given version software '{_tbl_result_version_sw_target}' is different with existing value '{_db_version_sw}' in database.", fatal_error=True)
+            else:
+               Logger.log(f"Append to existing test execution result for variant '{_db_prj_variant}' - version '{_db_version_sw}' - UUID '{_tbl_test_result_id}'.")
          else:
             Logger.log_error(f"Execution result with UUID '{_tbl_test_result_id}' is already existing. \
                \n{error_indent}Please use other UUID (or remove '--UUID' argument from your command) for new execution result. \
@@ -1309,7 +1218,7 @@ Flow to import PyTest results to database:
                                        _tbl_result_reporting_qualitygate)
             Logger.log(f"Created test execution result for variant '{_tbl_prj_variant}' - version '{_tbl_result_version_sw_target}' successfully: {str(_tbl_test_result_id)}")
    except Exception as reason:
-      Logger.log_error(f"Could not create new execution result. Reason: {reason}", fatal_error=True)
+      Logger.log_error(f"Could not create new execution result in database. Reason: {reason}", fatal_error=True)
 
    for suite in pytest_result.iterchildren("testsuite"):
       process_suite(db, suite, _tbl_test_result_id, dConfig)
@@ -1323,7 +1232,7 @@ Flow to import PyTest results to database:
    # 5. Disconnect from database
    db.disconnect()
    append_msg = " (append mode)" if args.append else ""
-   Logger.log(f"All test results are written to database successfully{append_msg}.")
+   Logger.log(f"\nAll test results are written to database successfully{append_msg}.")
 
 if __name__=="__main__":
    PyTestLog2DB()
