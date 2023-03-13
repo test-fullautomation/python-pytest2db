@@ -1114,20 +1114,29 @@ Flow to import PyTest results to database:
    try:
       bUseDefaultPrjVariant = True
       bUseDefaultVersionSW  = True
+      sMsgVarirantSetBy = sMsgVersionSWSetBy = "default value"
       
       # Process project/variant
       sVariant = dConfig["variant"]
       if args.variant!=None and args.variant.strip() != "":
          bUseDefaultPrjVariant = False
+         sMsgVarirantSetBy = "from --variant commandline argument"
          sVariant = args.variant.strip()
+      elif sVariant != DEFAULT_METADATA["variant"]:
+         bUseDefaultPrjVariant = False
+         sMsgVarirantSetBy = f"from configuration '{args.config}' file provided by --config"  
       _tbl_prj_project = _tbl_prj_variant = sVariant
 
       # Process versions info
       sVersionSW = dConfig["version_sw"]
       sVersionHW = dConfig["version_hw"]
       sVersionTest = dConfig["version_test"]
+      if sVersionSW != DEFAULT_METADATA["version_sw"]:
+         bUseDefaultVersionSW = False
+         sMsgVersionSWSetBy = f"from configuration '{args.config}' file provided by --config"
       if len(arVersions) > 0:
          bUseDefaultVersionSW = False
+         sMsgVersionSWSetBy = "from --versions commandline argument"
          if len(arVersions)==1 or len(arVersions)==2 or len(arVersions)==3:
             sVersionSW = arVersions[0] 
          if len(arVersions)==2 or len(arVersions)==3:
@@ -1142,6 +1151,10 @@ Flow to import PyTest results to database:
       # Format: %Y%m%d_%H%M%S from %Y-%m-%d %H:%M:%S
       if _tbl_result_version_sw_target=="":
          _tbl_result_version_sw_target = datetime.strftime(datetime.strptime(pytest_result.get("starttime"), DB_DATETIME_FORMAT), "%Y%m%d_%H%M%S")
+
+      if not args.append:
+         Logger.log(f"Set project/variant to '{sVariant}' ({sMsgVarirantSetBy})")
+         Logger.log(f"Set version_sw to '{_tbl_result_version_sw_target}' ({sMsgVersionSWSetBy})")
 
       # Process branch info from software version
       _tbl_prj_branch = get_branch_from_swversion(_tbl_result_version_sw_target)
@@ -1205,7 +1218,7 @@ Flow to import PyTest results to database:
                                        _tbl_result_reporting_qualitygate)
             Logger.log(f"Created test execution result for variant '{_tbl_prj_variant}' - version '{_tbl_result_version_sw_target}' successfully: {str(_tbl_test_result_id)}")
    except Exception as reason:
-      Logger.log_error(f"Could not create new execution result. Reason: {reason}", fatal_error=True)
+      Logger.log_error(f"Could not create new execution result in database. Reason: {reason}", fatal_error=True)
 
    for suite in pytest_result.iterchildren("testsuite"):
       process_suite(db, suite, _tbl_test_result_id, dConfig)
@@ -1219,7 +1232,7 @@ Flow to import PyTest results to database:
    # 5. Disconnect from database
    db.disconnect()
    append_msg = " (append mode)" if args.append else ""
-   Logger.log(f"All test results are written to database successfully{append_msg}.")
+   Logger.log(f"\nAll test results are written to database successfully{append_msg}.")
 
 if __name__=="__main__":
    PyTestLog2DB()
