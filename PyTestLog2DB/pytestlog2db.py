@@ -854,10 +854,6 @@ Process test case data and create new test case record.
    _tbl_case_result_state   = "complete" 
    _tbl_case_result_return  = 11
    _tbl_case_counter_resets = 0
-   try:
-      _tbl_case_lastlog = base64.b64encode(test.message.encode())
-   except:
-      _tbl_case_lastlog = None
    _tbl_test_result_id = test_result_id
    _tbl_file_id = file_id
    
