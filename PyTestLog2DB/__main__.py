@@ -11,7 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from .pytestlog2db import PyTestLog2DB
+from PyTestLog2DB.pytestlog2db import PyTestLog2DB
 
 if __name__ == "__main__":
    PyTestLog2DB()
