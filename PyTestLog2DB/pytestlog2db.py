@@ -39,7 +39,6 @@ from lxml import etree
 from datetime import datetime, timedelta
 import platform 
 from pkg_resources import get_distribution
-import pytest
 
 from PyTestLog2DB.CDataBase import CDataBase
 from PyTestLog2DB.version import VERSION, VERSION_DATE
@@ -106,7 +105,15 @@ This information is used as default value for `testtool` when importing.
    Current PyTest and Python verions as testtool.\
    E.g: PyTest 6.2.5 (Python 3.9.0)
    """
-   return f"PyTest {get_distribution('pytest').version} (Python {platform.python_version()})"
+   sPytestVersion = "unknown_version"
+   # Try to get pytest version
+   # Incase pytest is not installed, set to 'unknown_version'
+   try:
+      sPytestVersion = get_distribution('pytest').version
+   except:
+      pass
+
+   return f"PyTest {sPytestVersion} (Python {platform.python_version()})"
 
 CONFIG_SCHEMA = {
    "components" : [str, dict],
