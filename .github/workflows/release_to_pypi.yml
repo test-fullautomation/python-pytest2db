@@ -44,4 +44,5 @@ jobs:
           with:
             allowUpdates: true
             omitNameDuringUpdate: true
+            makeLatest: true
             artifacts: dist/*
