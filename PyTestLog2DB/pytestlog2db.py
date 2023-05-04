@@ -1255,7 +1255,7 @@ Flow to import PyTest results to database:
 
    # 5. Disconnect from database
    db.disconnect()
-   import_mode_msg = "append" if args.append else "written"
+   import_mode_msg = "appended" if args.append else "written"
    testcnt_msg = f"All {iTotalTestcase}" 
    extended_msg = "" 
    if (iTotalTestcase>iSuccessTestcase):
