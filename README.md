@@ -16,32 +16,43 @@
 
 ## Getting Started
 
-[PyTestLog2DB](https://github.com/test-fullautomation/python-pytestlog2db)
-is the tool that helps to import [PyTest](https://docs.pytest.org)
-results file(s) (as [JUnit XML](https://llg.cubic.org/docs/junit)
-format) to
-[TestResultWebApp](https://github.com/test-fullautomation/TestResultWebApp)
-Dashboard.
+**PyTestLog2DB** is a command-line tool that enables you to import
+[pytest](https://docs.pytest.org) XML result files into
+[TestResultWebApp](https://github.com/test-fullautomation/TestResultWebApp)\'s
+database for presenting an overview about the whole test execution and
+detail of each test result.
 
-[PyTestLog2DB](https://github.com/test-fullautomation/python-pytestlog2db)
-tool is operating system independent and only works with Python 3.
+**PyTestLog2DB** tool is operating system independent and only works
+with Python 3.
 
 ### How to install
 
-[PyTestLog2DB](https://github.com/test-fullautomation/python-pytestlog2db)
-is not available on [PyPI](https://pypi.org/) now.
+**PyTestLog2DB** can be installed in two different ways.
 
-But you can install this package directly from Github repository as
-below:
+1.  Installation via PyPi (recommended for users)
 
-    pip install git+https://github.com/test-fullautomation/python-pytestlog2db.git
+    ``` 
+    pip install PyTestLog2DB
+    ```
 
-Or you can clone sourcecode to your local directory then install this
-package with below steps:
+    [PyTestLog2DB in PyPi](https://pypi.org/project/PyTestLog2DB/)
 
+2.  Installation via GitHub (recommended for developers)
+
+    Clone the **python-pytestlog2db** repository to your machine.
+
+    ``` 
     git clone https://github.com/test-fullautomation/python-pytestlog2db.git
-    cd python-pytestlog2db
+    ```
+
+    [PyTestLog2DB in
+    GitHub](https://github.com/test-fullautomation/python-pytestlog2db)
+
+    Use the following command to install **PyTestLog2DB**:
+
+    ``` 
     python setup.py install
+    ```
 
 After succesful installation, the executable file **PyTestLog2DB** will
 be available (under *Scripts* folder of Python on Windows and
@@ -52,10 +63,8 @@ you can run it directly as operation system\'s command.
 
 ## Usage
 
-[PyTestLog2DB](https://github.com/test-fullautomation/python-pytestlog2db)
-requires the [PyTest](https://docs.pytest.org) result file(s) which
-contains the test result in [JUnit
-XML](https://llg.cubic.org/docs/junit) format and
+**PyTestLog2DB** requires the [pytest](https://docs.pytest.org) result
+file(s) which contains the test result in *JUnit XML* format and
 [TestResultWebApp](https://github.com/test-fullautomation/TestResultWebApp)\'s
 database information for importing.
 
@@ -79,17 +88,17 @@ The usage should be showed as below:
 
     optional arguments:
     -h, --help           show this help message and exit
-    -v                   Version of the PyTestLog2DB importer.
+    -v, --version        version of the PyTestLog2DB importer.
     --recursive          if set, then the path is searched recursively for output files to be imported.
     --dryrun             if set, then verify all input arguments (includes DB connection) and show what would be done.
-    --append             is used in combination with --UUID <UUID>. If set, allow to append new result(s) to existing execution result UUID in -UUID argument.
+    --append             is used in combination with --UUID <UUID>. If set, allow to append new result(s) to existing execution result UUID in --UUID argument.
     --UUID UUID          UUID used to identify the import and version ID on webapp. If not provided PyTestLog2DB will generate an UUID for the whole import.
     --variant VARIANT    variant name to be set for this import.
     --versions VERSIONS  metadata: Versions (Software;Hardware;Test) to be set for this import (semicolon separated).
     --config CONFIG      configuration json file for component mapping information.
 
 The below command is simple usage with all required arguments to import
-[PyTest](https://docs.pytest.org) results into TestResultWebApp\'s
+[pytest](https://docs.pytest.org) results into TestResultWebApp\'s
 database:
 
     PyTestLog2DB <resultxmlfile> <server> <user> <password> <database>
@@ -101,16 +110,16 @@ Besides the executable file, you can also run tool as a Python module
 ## Example
 
 In order the import the robot result(s) to TestResultWebApp\'s database,
-we need the [PyTest](https://docs.pytest.org) result file in [JUnit
-XML](https://llg.cubic.org/docs/junit) format.
+we need the [pytest](https://docs.pytest.org) result file in *JUnit XML*
+format.
 
-So, firstly execute the [PyTest](https://docs.pytest.org) testcase(s) to
+So, firstly execute the [pytest](https://docs.pytest.org) testcase(s) to
 get the result file(s). But the **\*.xml** result file is not generated
 by default.
 
 We need to specify the argument *\--junit-xml=\<path\>* when executing
-[PyTest](https://docs.pytest.org) to get the generated [JUnit
-XML](https://llg.cubic.org/docs/junit) report file at given path.
+[pytest](https://docs.pytest.org) to get the generated *JUnit XML*
+report file at given path.
 
 E.g: :
 
@@ -128,23 +137,22 @@ how wonderful the execution result is displayed as below figures:
 
 Dashboard view:
 
-![Dashboard view](packagedoc/additional_docs/pictures/Dashboard.png)
+![Dashboard view](https://github.com/test-fullautomation/python-pytestlog2db/blob/develop/packagedoc/additional_docs/pictures/Dashboard.png?raw=true)
 
 Datatable view:
 
-![Datatable view](packagedoc/additional_docs/pictures/Datatable.png)
+![Datatable view](https://github.com/test-fullautomation/python-pytestlog2db/blob/develop/packagedoc/additional_docs/pictures/Datatable.png?raw=true)
 
 ### Notes:
 
-> The **\*.xml** report file generated by PyTest contains only the
+> The **\*.xml** report file generated by pytest contains only the
 > testcase result(s) and less metadata information about the test
 > execution such as *project/variant*, *software version*, *tester* ,
 > *component*, \... which are required by
 > [TestResultWebApp](https://github.com/test-fullautomation/TestResultWebApp).
 >
-> So that,
-> [PyTestLog2DB](https://github.com/test-fullautomation/python-pytestlog2db)
-> will handle those information with the default values.
+> So that, **PyTestLog2DB** will handle those information with the
+> default values.
 >
 > But you can use the optional argument *\--config CONFIG* to specify
 > those information when importing to
@@ -174,14 +182,12 @@ Datatable view:
 ## Contribution
 
 We are always searching support and you are cordially invited to help to
-improve
-[PyTestLog2DB](https://github.com/test-fullautomation/python-pytestlog2db)
-tool.
+improve **PyTestLog2DB** tool.
 
 ## Sourcecode Documentation
 
 To understand more detail about the tool\'s features, parameters and how
-PyTest result(s) will be displayed on TestResultWebApp, please refer to
+pytest result(s) will be displayed on TestResultWebApp, please refer to
 [PyTestLog2DB tool's
 Documentation](https://github.com/test-fullautomation/python-pytestlog2db/blob/develop/PyTestLog2DB/PyTestLog2DB.pdf).
 
