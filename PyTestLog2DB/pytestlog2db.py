@@ -884,7 +884,7 @@ Process test case data and create new test case record.
                                                 )
       except Exception as reason:
          Logger.log_error(f"Cannot create new test case result for test '{_tbl_case_name}' in database.\nReason: {reason}")
-         return
+         return float(test.get("time"))
    else:
       tbl_case_id = "testcase id for dryrun"
    iSuccessTestcase += 1

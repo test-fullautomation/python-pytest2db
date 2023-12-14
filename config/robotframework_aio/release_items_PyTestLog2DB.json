@@ -45,15 +45,8 @@
 # ------------------------------------------
 
    "RELEASES"  : {
-                   "0.9." : [
-                              "PyTestLog2DB change 0.9 A",
-                              "PyTestLog2DB change 0.9 B",
-                              "PyTestLog2DB change 0.9 X"
-                            ],
                    "0.10." : [
-                               "PyTestLog2DB change 0.10 A",
-                               "PyTestLog2DB change 0.10 B",
-                               "PyTestLog2DB change 0.10 X"
+                               "PyTestLog2DB fixes issue of test duration when importing test case unsuccessfully"
                              ]
                  }
 }
