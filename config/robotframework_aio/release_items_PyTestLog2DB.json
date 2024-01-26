@@ -46,7 +46,7 @@
 
    "RELEASES"  : {
                    "0.10." : [
-                               "PyTestLog2DB fixes issue of test duration when importing test case unsuccessfully"
+                               "Bugfix: issue with test duration when importing test case unsuccessfully"
                              ]
                  }
 }
