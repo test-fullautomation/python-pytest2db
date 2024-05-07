@@ -40,7 +40,7 @@ from datetime import datetime, timedelta
 import platform
 from pkg_resources import get_distribution
 
-from PyTestLog2DB.CDataBase import CDataBase
+from TestResultDBAccess import DBAccessFactory
 from PyTestLog2DB.version import VERSION, VERSION_DATE
 
 PYTEST_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
@@ -304,6 +304,7 @@ Avalable arguments in command line:
    - `--variant` : variant name to be set for this import.
    - `--versions` : metadata: Versions (Software;Hardware;Test) to be set for this import.
    - `--config` : configuration json file for component mapping information.
+   - `--interface` : database access interface.
 
 **Arguments:**
 
@@ -335,6 +336,7 @@ Avalable arguments in command line:
    cmdlineparser.add_argument('--variant', type=str, help='variant name to be set for this import.')
    cmdlineparser.add_argument('--versions', type=str, help='metadata: Versions (Software;Hardware;Test) to be set for this import (semicolon separated).')
    cmdlineparser.add_argument('--config', type=str, help='configuration json file for component mapping information.')
+   cmdlineparser.add_argument('--interface', choices=['db', 'rest'], default='db', help='database access interface.')
 
    return cmdlineparser.parse_args()
 
@@ -1119,7 +1121,7 @@ Flow to import PyTest results to database:
 
 
    # 3. Connect to database
-   db=CDataBase()
+   db = DBAccessFactory().create(args.interface)
    try:
       db.connect(args.server,
                  args.user,
