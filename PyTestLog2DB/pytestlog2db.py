@@ -678,7 +678,7 @@ Get test result from provided Testcase object.
       traceback_log = f"This test is skipped."
       return_code = 20
 
-   return (main_result, base64.b64encode(traceback_log.encode()), return_code)
+   return (main_result, str(base64.b64encode(traceback_log.encode()), encoding='utf-8'), return_code)
 
 def process_component_info(dConfig, sTestClassname):
    """
