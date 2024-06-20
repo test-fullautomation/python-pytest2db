@@ -48,7 +48,7 @@
                    "0.10." : [
                                "Bugfix: issue with test duration when importing test case unsuccessfully"
                              ],
-                   "0.12." : [
+                   "0.12.0.;0.13.0." : [
 "
 Introduce new feature to switch the access interface to TestResult's database
 
