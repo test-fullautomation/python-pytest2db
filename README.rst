@@ -134,7 +134,8 @@ The usage should be showed as below:
    --config CONFIG      configuration json file for component mapping information.
    --interface {db,rest}
                         database access interface.
-
+   --testrunurl TESTRUNURL
+                        link to test execution job: Jenkins job, Gitlab CI/CD pipeline, ...
 
 The below command is simple usage with all required arguments to import
 pytest_ results into TestResultWebApp's database:

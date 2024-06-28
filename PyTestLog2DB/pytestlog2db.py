@@ -305,6 +305,7 @@ Avalable arguments in command line:
    - `--versions` : metadata: Versions (Software;Hardware;Test) to be set for this import.
    - `--config` : configuration json file for component mapping information.
    - `--interface` : database access interface.
+   - `--testrunurl`: link to test execution job: Jenkins job, Gitlab CI/CD pipeline, ...
 
 **Arguments:**
 
@@ -337,6 +338,7 @@ Avalable arguments in command line:
    cmdlineparser.add_argument('--versions', type=str, help='metadata: Versions (Software;Hardware;Test) to be set for this import (semicolon separated).')
    cmdlineparser.add_argument('--config', type=str, help='configuration json file for component mapping information.')
    cmdlineparser.add_argument('--interface', choices=['db', 'rest'], default='db', help='database access interface.')
+   cmdlineparser.add_argument('--testrunurl', type=str, default="", help='link to test execution job: Jenkins job, Gitlab CI/CD pipeline, ...')
 
    return cmdlineparser.parse_args()
 
@@ -1076,6 +1078,7 @@ Flow to import PyTest results to database:
    * `variant` : variant name to be set for this import.
    * `versions` : metadata: Versions (Software;Hardware;Test) to be set for this import.
    * `config` : configuration json file for component mapping information.
+   * `testrunurl`: link to test execution job: Jenkins job, Gitlab CI/CD pipeline, ...
 
 **Returns:**
 
@@ -1199,7 +1202,7 @@ Flow to import PyTest results to database:
 
       # Process other info
       _tbl_result_interpretation = ""
-      _tbl_result_jenkinsurl     = ""
+      _tbl_result_jenkinsurl     = args.testrunurl
       _tbl_result_reporting_qualitygate = ""
 
       # Check the UUID is existing or not
