@@ -37,13 +37,13 @@ import colorama as col
 import json
 from lxml import etree
 from datetime import datetime, timedelta
+from dateutil import parser
 import platform
 from pkg_resources import get_distribution
 
 from TestResultDBAccess import DBAccessFactory
 from PyTestLog2DB.version import VERSION, VERSION_DATE
 
-PYTEST_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 DB_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 def __current_user():
@@ -585,13 +585,13 @@ Besides, `starttime` and `endtime` are also calculated and added in the merged r
          if oMergedTree == None:
             oMergedTree = oTree
             sStartTime  = oMergedTree.getchildren()[0].get("timestamp")
-            dtStartTime = datetime.strptime(sStartTime, PYTEST_DATETIME_FORMAT)
+            dtStartTime = parser.parse(sStartTime)
             dtEndTime   = dtStartTime + timedelta(seconds=float(oMergedTree.getchildren()[0].get("time")))
          else:
             oAdditionalTree = etree.parse(item)
             for oSuite in oAdditionalTree.getroot().iterchildren("testsuite"):
                oMergedTree.append(oSuite)
-               dtTimestamp = datetime.strptime(oSuite.get("timestamp"), PYTEST_DATETIME_FORMAT)
+               dtTimestamp = parser.parse(oSuite.get("timestamp"))
 
                # check starttime and endtime for the execution result
                if dtTimestamp < dtStartTime:
@@ -942,7 +942,7 @@ Process to the lowest suite level (test file):
    _tbl_file_tester_account = dConfig["tester"]
    _tbl_file_tester_machine = suite.get("hostname")
    _tbl_file_time_start = suite.get("timestamp")
-   test_start_time      = datetime.strptime(_tbl_file_time_start, PYTEST_DATETIME_FORMAT)
+   test_start_time      = parser.parse(_tbl_file_time_start)
    _tbl_file_time_end   = datetime.strftime(test_start_time + timedelta(seconds=float(suite.get("time"))), DB_DATETIME_FORMAT)
 
    test_number = 1
@@ -1179,7 +1179,7 @@ Flow to import PyTest results to database:
       # Set version as start time of the execution if not provided in metadata
       # Format: %Y%m%d_%H%M%S from %Y-%m-%d %H:%M:%S
       if _tbl_result_version_sw_target=="":
-         _tbl_result_version_sw_target = datetime.strftime(datetime.strptime(pytest_result.get("starttime"), DB_DATETIME_FORMAT), "%Y%m%d_%H%M%S")
+         _tbl_result_version_sw_target = datetime.strftime(parser.parse(pytest_result.get("starttime")), "%Y%m%d_%H%M%S")
 
       if not args.append:
          Logger.log(f"Set project/variant to '{sVariant}' ({sMsgVarirantSetBy})")
