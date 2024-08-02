@@ -941,8 +941,8 @@ Process to the lowest suite level (test file):
    _tbl_file_id = None
    _tbl_file_tester_account = dConfig["tester"]
    _tbl_file_tester_machine = suite.get("hostname")
-   _tbl_file_time_start = suite.get("timestamp")
-   test_start_time      = parser.parse(_tbl_file_time_start)
+   test_start_time      = parser.parse(suite.get("timestamp"))
+   _tbl_file_time_start = datetime.strftime(test_start_time, DB_DATETIME_FORMAT)
    _tbl_file_time_end   = datetime.strftime(test_start_time + timedelta(seconds=float(suite.get("time"))), DB_DATETIME_FORMAT)
 
    test_number = 1
